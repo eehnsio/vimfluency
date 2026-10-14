@@ -74,6 +74,16 @@ const lockedInput: Extension = [
   ),
 ]
 
+/** Vim-pluginets editorobjekt. Kastar ett tydligt fel om pluginet inte kopplades på. */
+function requireVim(view: EditorView) {
+  const cm = getCM(view)
+  if (!cm) {
+    view.destroy()
+    throw new Error('The vim extension did not attach to the editor')
+  }
+  return cm
+}
+
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
@@ -96,7 +106,7 @@ export function createSession(options: SessionOptions): Session {
     }),
     parent: options.parent ?? document.createElement('div'),
   })
-  const cm = getCM(view)!
+  const cm = requireVim(view)
   const applyNumberOptions = () => {
     if (options.lineNumbers) {
       view.dispatch({ effects: numbers.reconfigure(lineNumberExtension(numberOptions)) })
