@@ -6,6 +6,7 @@ import { CompletionBanner } from './components/Terminal/CompletionBanner'
 import { StatusLine } from './components/Terminal/StatusLine'
 import { TerminalPane } from './components/Terminal/TerminalPane'
 import { VimEditor } from './components/Terminal/VimEditor'
+import { isModifierKey } from './engine/lock'
 import { allExercises, categories, getExercise, nextExercise } from './exercises/registry'
 import { useExerciseSession } from './hooks/useExerciseSession'
 import { useProgress } from './hooks/useProgress'
@@ -39,7 +40,7 @@ export default function App() {
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return
       if (event.target instanceof Element && event.target.closest('button, a, summary')) return
-      if (['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'].includes(event.key)) return
+      if (isModifierKey(event)) return
       event.preventDefault()
       event.stopPropagation()
       if (event.key === 'Enter' && nextId) select(nextId)

@@ -1,18 +1,18 @@
-import { Compartment, EditorState } from '@codemirror/state'
+import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
 import type { EditorState as SessionState } from './checks'
 import { parseKeys } from './keys'
 import { keyFromEvent } from './lock'
-import { lineNumberExtension, type NumberOptions } from './lineNumbers'
-import type { Mode } from '../exercises/types'
+import { lineNumberExtension } from './lineNumbers'
+import type { Mode, NumberOptions } from '../exercises/types'
 
 export interface SessionOptions {
   parent?: HTMLElement
   content: string
   /** 1-indexerat, som i vim. */
   start: { line: number; col: number }
-  extensions?: import('@codemirror/state').Extension[]
+  extensions?: Extension[]
   /** Visa radnummer och aktiv rad. Styrs av `:set number` och `:set relativenumber`. */
   lineNumbers?: boolean
   /**
@@ -48,24 +48,37 @@ function defineToggle(name: OptionName, aliases: string[]) {
 defineToggle('number', ['nu'])
 defineToggle('relativenumber', ['rnu'])
 
-/** Låser musen och andra inmatningssätt än tangentbordet i övningsläge. */
-const lockedInput = EditorView.domEventHandlers({
-  mousedown(event, view) {
-    event.preventDefault()
-    view.focus()
-    return true
-  },
-  dblclick: (event) => (event.preventDefault(), true),
-  dragstart: (event) => (event.preventDefault(), true),
-  drop: (event) => (event.preventDefault(), true),
-  paste: (event) => (event.preventDefault(), true),
-  cut: (event) => (event.preventDefault(), true),
-})
+/** Inmatningssätt som aldrig är tangenttryck. IME-komposition och tryck-och-håll hamnar här. */
+const BLOCKED_USER_EVENTS = ['input.paste', 'input.drop', 'input.type.compose', 'delete.cut', 'delete.dragged']
+
+/**
+ * Låser musen och andra inmatningssätt än tangentbordet i övningsläge. DOM-
+ * händelserna stoppas först, och transaktionsfiltret fångar det som ändå tar sig
+ * förbi (komposition, webbläsarens egna redigeringsåtgärder).
+ */
+const lockedInput: Extension = [
+  EditorView.domEventHandlers({
+    mousedown(event, view) {
+      event.preventDefault()
+      view.focus()
+      return true
+    },
+    dblclick: (event) => (event.preventDefault(), true),
+    dragstart: (event) => (event.preventDefault(), true),
+    drop: (event) => (event.preventDefault(), true),
+    paste: (event) => (event.preventDefault(), true),
+    cut: (event) => (event.preventDefault(), true),
+  }),
+  EditorState.transactionFilter.of((transaction) =>
+    BLOCKED_USER_EVENTS.some((event) => transaction.isUserEvent(event)) ? [] : transaction,
+  ),
+]
 
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
-  const numberOptions: NumberOptions = { number: true, relativenumber: true }
+  const initialNumberOptions: NumberOptions = { number: true, relativenumber: true }
+  const numberOptions: NumberOptions = { ...initialNumberOptions }
   const numbers = new Compartment()
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
@@ -84,13 +97,25 @@ export function createSession(options: SessionOptions): Session {
     parent: options.parent ?? document.createElement('div'),
   })
   const cm = getCM(view)!
-  optionHandlers.set(cm, (name, value) => {
-    numberOptions[name] = value
+  const applyNumberOptions = () => {
     if (options.lineNumbers) {
       view.dispatch({ effects: numbers.reconfigure(lineNumberExtension(numberOptions)) })
     }
+  }
+  optionHandlers.set(cm, (name, value) => {
+    numberOptions[name] = value
+    applyNumberOptions()
     notify()
   })
+  const getMode = (): Mode => {
+    const state = cm.state.vim
+    if (state?.insertMode) return 'insert'
+    if (state?.visualMode) return 'visual'
+    return 'normal'
+  }
+
+  const promptInput = () => view.dom.querySelector('input')
+
   const { allowedKeys, onBlocked } = options
   const onLockedKeyDown = (event: KeyboardEvent) => {
     if (!allowedKeys) return
@@ -109,15 +134,6 @@ export function createSession(options: SessionOptions): Session {
 
   const placeCursor = () => cm.setCursor(start.line - 1, start.col - 1)
   placeCursor()
-
-  const getMode = (): Mode => {
-    const state = cm.state.vim
-    if (state?.insertMode) return 'insert'
-    if (state?.visualMode) return 'visual'
-    return 'normal'
-  }
-
-  const promptInput = () => view.dom.querySelector('input')
 
   const insertText = (text: string) => view.dispatch(view.state.replaceSelection(text))
 
@@ -172,6 +188,8 @@ export function createSession(options: SessionOptions): Session {
   function reset() {
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: content } })
     Vim.handleKey(cm, '<Esc>', 'user')
+    Object.assign(numberOptions, initialNumberOptions)
+    applyNumberOptions()
     placeCursor()
     notify()
   }

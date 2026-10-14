@@ -1,3 +1,4 @@
+import type { ReactNode } from 'react'
 import type { EditorState } from '../../engine/checks'
 
 interface Props {
@@ -34,9 +35,15 @@ function scrollPercent(state: EditorState) {
   return `${Math.round((state.cursor.line / lines) * 100)}%`
 }
 
+function Key({ children }: { children: ReactNode }) {
+  return <code className="rounded bg-surface-raised px-1 text-fg">{children}</code>
+}
+
 /** Statusraden som i nvim, följd av kommandoraden där meddelanden visas. */
 export function StatusLine({ state, filename, blockedKey, overshot, needsEsc }: Props) {
   const mode = state?.mode ?? 'normal'
+  // Ett meddelande i taget: Esc-uppmaningen går före låst tangent, som går före överskjutet mål.
+  const message = needsEsc ? 'needsEsc' : blockedKey ? 'blocked' : overshot ? 'overshot' : null
   return (
     <div className="font-mono text-sm">
       <div className="flex items-stretch bg-surface-raised">
@@ -49,23 +56,19 @@ export function StatusLine({ state, filename, blockedKey, overshot, needsEsc }: 
         </span>
       </div>
       <div className="h-7 px-3 py-1 text-xs text-fg-muted">
-        {needsEsc && (
+        {message === 'needsEsc' && (
           <span role="status" className="text-success">
-            That looks right. Press{' '}
-            <code className="rounded bg-surface-raised px-1 text-fg">Esc</code> to go back to normal mode.
+            That looks right. Press <Key>Esc</Key> to go back to normal mode.
           </span>
         )}
-        {!needsEsc && overshot && !blockedKey && (
-          <span role="alert" className="text-danger">
-            You went past the target. Press{' '}
-            <code className="rounded bg-surface-raised px-1 text-fg">r</code> to start over.
-          </span>
-        )}
-        {!needsEsc && blockedKey && (
+        {message === 'blocked' && (
           <span role="alert">
-            <code className="rounded bg-surface-raised px-1 text-fg">{blockedKey}</code> is locked in this
-            exercise. Stuck? Press <code className="rounded bg-surface-raised px-1 text-fg">r</code> to start
-            over.
+            <Key>{blockedKey}</Key> is locked in this exercise. Stuck? Press <Key>r</Key> to start over.
+          </span>
+        )}
+        {message === 'overshot' && (
+          <span role="alert" className="text-danger">
+            You went past the target. Press <Key>r</Key> to start over.
           </span>
         )}
       </div>

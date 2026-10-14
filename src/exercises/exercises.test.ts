@@ -1,10 +1,8 @@
 import { evaluate } from '../engine/checks'
+import { parseKeys } from '../engine/keys'
 import { createSession } from '../engine/session'
+import { activeContent } from './define'
 import { allExercises, categories, getExercise, nextExercise } from './registry'
-import type { Exercise } from './types'
-
-const activeContent = (exercise: Exercise) =>
-  exercise.files.find((file) => file.path === exercise.activeFile)!.content
 
 describe('registry', () => {
   it('has unique exercise ids', () => {
@@ -44,6 +42,28 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     const session = createSession({ content: activeContent(exercise), start: exercise.start })
     expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).passed).toBe(false)
     session.destroy()
+  })
+
+  it('is not solved after solving it and resetting', () => {
+    const session = createSession({ content: activeContent(exercise), start: exercise.start })
+    session.sendKeys(exercise.solution)
+    session.reset()
+    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).passed).toBe(false)
+    session.destroy()
+  })
+
+  it('does not need r as a normal-mode key, which is the emergency exit', () => {
+    // `r` är låst och startar om övningen. Står den som kommando i lösningen blir den
+    // tillåten och nödutgången fungerar inte. Text i insert-läge och i prompter är okej.
+    const session = createSession({ content: activeContent(exercise), start: exercise.start })
+    const rAsCommand: number[] = []
+    parseKeys(exercise.solution).forEach((key, index) => {
+      const inPrompt = session.view.dom.querySelector('input') !== null
+      if (key === 'r' && !inPrompt && session.getState().mode !== 'insert') rAsCommand.push(index)
+      session.sendKeys(key === '<' ? '<lt>' : key)
+    })
+    session.destroy()
+    expect(rAsCommand).toEqual([])
   })
 
   it('is solved by the reference solution', () => {

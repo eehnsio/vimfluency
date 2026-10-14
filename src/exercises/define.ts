@@ -1,5 +1,10 @@
 import type { Exercise } from './types'
 
+/** Innehållet i övningens aktiva fil, som den ser ut när övningen börjar. */
+export function activeContent(exercise: Exercise): string {
+  return exercise.files.find((file) => file.path === exercise.activeFile)!.content
+}
+
 export type ExerciseMeta = Omit<Exercise, 'files'>
 
 /**

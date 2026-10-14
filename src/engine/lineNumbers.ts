@@ -6,6 +6,7 @@ import {
   lineNumberMarkers,
   lineNumbers,
 } from '@codemirror/view'
+import type { NumberOptions } from '../exercises/types'
 
 class NumberMarker extends GutterMarker {
   text: string
@@ -19,12 +20,6 @@ class NumberMarker extends GutterMarker {
   toDOM() {
     return document.createTextNode(this.text)
   }
-}
-
-/** Radnummer enligt vims `number` och `relativenumber`. */
-export interface NumberOptions {
-  number: boolean
-  relativenumber: boolean
 }
 
 const relative: Extension = [
@@ -48,6 +43,3 @@ export function lineNumberExtension({ number, relativenumber }: NumberOptions): 
   const gutter = !number ? [] : relativenumber ? relative : lineNumbers()
   return [gutter, highlightActiveLine(), highlightActiveLineGutter()]
 }
-
-/** Hybridnummer, standardläget i övningarna. */
-export const relativeLineNumbers = lineNumberExtension({ number: true, relativenumber: true })
