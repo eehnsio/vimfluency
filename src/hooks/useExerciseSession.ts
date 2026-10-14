@@ -53,7 +53,6 @@ export function useExerciseSession(exercise: Exercise) {
     setCompleted(false)
     setBlockedKey(null)
     setOvershot(false)
-    setOvershot(false)
     session.view.focus()
 
     return () => {
@@ -67,6 +66,7 @@ export function useExerciseSession(exercise: Exercise) {
     sessionRef.current?.reset()
     setCompleted(false)
     setBlockedKey(null)
+    setOvershot(false)
     sessionRef.current?.view.focus()
   }, [])
 
