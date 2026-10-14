@@ -8,13 +8,14 @@ Det här dokumentet beskriver vad som är byggt och vad som återstår. Arkitekt
 |---|---|
 | Skal | Vite + React + TypeScript (strict), Tailwind v4 med tokens, Vitest + Testing Library, oxlint |
 | Engine | `keys`, `session`, `checks`, `lock`, `overshoot`, `lineNumbers`, `editorTheme` |
-| Övningar | 8 kategorier, 28 övningar. Varje lösning bevisas av `exercises.test.ts` |
+| Övningar | 9 kategorier, 32 övningar. Varje lösning bevisas av `exercises.test.ts` |
 | UI | Sidopanel (övning, instruktion, tangenter i spel, hintar, lista) och terminalfönster med statusrad och kommandorad |
 | Framsteg | `localStorage` via `useProgress`, bock i listan, senast vald övning kommer ihåg |
 | Pedagogik | Låsta tangenter per övning, `r` som nödutgång, Enter/`r` efter klarad övning, varning vid överskjutning, relativa radnummer |
 
 Kategorier och övningar:
 
+- **Start here (intro):** fejkat skal med `nvim`, radnummer, position, lägen, `:set nonumber`.
 - **Basics:** `j`/`k`, `h`/`l`, kombinera.
 - **Motions:** `w` med count, `b`, `e`, `^`, `$`.
 - **Navigation:** `G`, `gg`, `:N`, `%`.
@@ -28,11 +29,12 @@ Kategorier och övningar:
 
 Beslutat men inte byggt:
 
-- **Intro / "lektion 0":** ett fejkat terminalskal där man måste skriva `nvim`, följt av en guidad rundtur (radnummer, position, läge, `:set number`). Öppna frågor: obligatoriskt eller alltid synligt, vad rundturen ska innehålla.
 - **Hintruta:** tydligare, med en hint i taget. Öppen fråga: ska lösningen kunna visas efter sista hinten?
 - **Feedback för ändringsövningar:** meddelande när man är tillbaka i normalt läge och texten är fel (idag finns bara överskjutning för markörövningar).
 
 Idéer:
+
+- Fler intro-steg (`:q`, hur man tar sig ur ett läge, `:set` av fler alternativ).
 
 - Easter eggs (`:q` i en övning, `:wq`/`ZZ`, bekräftelse när en kategori är klar).
 - Startsida som text i editorn med progress.
