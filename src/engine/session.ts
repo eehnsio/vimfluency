@@ -51,6 +51,12 @@ defineToggle('relativenumber', ['rnu'])
 /** Inmatningssätt som aldrig är tangenttryck. IME-komposition och tryck-och-håll hamnar här. */
 const BLOCKED_USER_EVENTS = ['input.paste', 'input.drop', 'input.type.compose', 'delete.cut', 'delete.dragged']
 
+/** Stoppar webbläsarens standardåtgärd och markerar händelsen som hanterad för CodeMirror. */
+const block = (event: Event) => {
+  event.preventDefault()
+  return true
+}
+
 /**
  * Låser musen och andra inmatningssätt än tangentbordet i övningsläge. DOM-
  * händelserna stoppas först, och transaktionsfiltret fångar det som ändå tar sig
@@ -63,11 +69,11 @@ const lockedInput: Extension = [
       view.focus()
       return true
     },
-    dblclick: (event) => (event.preventDefault(), true),
-    dragstart: (event) => (event.preventDefault(), true),
-    drop: (event) => (event.preventDefault(), true),
-    paste: (event) => (event.preventDefault(), true),
-    cut: (event) => (event.preventDefault(), true),
+    dblclick: block,
+    dragstart: block,
+    drop: block,
+    paste: block,
+    cut: block,
   }),
   EditorState.transactionFilter.of((transaction) =>
     BLOCKED_USER_EVENTS.some((event) => transaction.isUserEvent(event)) ? [] : transaction,
