@@ -65,9 +65,8 @@ const block = (event: Event) => {
 const lockedInput: Extension = [
   EditorView.domEventHandlers({
     mousedown(event, view) {
-      event.preventDefault()
       view.focus()
-      return true
+      return block(event)
     },
     dblclick: block,
     dragstart: block,

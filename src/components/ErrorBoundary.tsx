@@ -1,4 +1,4 @@
-import { Component, type ErrorInfo, type ReactNode } from 'react'
+import { Component, type ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
@@ -11,16 +11,13 @@ interface State {
 /**
  * Fångar fel i renderingen och visar ett begripligt meddelande istället för en
  * vit sida. Framsteg ligger i `localStorage`, så en omladdning förlorar inget.
+ * React loggar felet själv, så `getDerivedStateFromError` räcker för fallbacken.
  */
 export class ErrorBoundary extends Component<Props, State> {
   state: State = { failed: false }
 
   static getDerivedStateFromError(): State {
     return { failed: true }
-  }
-
-  componentDidCatch(_error: Error, _info: ErrorInfo) {
-    // React loggar felet själv i konsolen. Här behövs bara fallbacken.
   }
 
   render() {
