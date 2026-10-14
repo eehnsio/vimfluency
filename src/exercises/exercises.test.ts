@@ -46,6 +46,14 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     session.destroy()
   })
 
+  it('is not solved after solving it and resetting', () => {
+    const session = createSession({ content: activeContent(exercise), start: exercise.start })
+    session.sendKeys(exercise.solution)
+    session.reset()
+    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).passed).toBe(false)
+    session.destroy()
+  })
+
   it('is solved by the reference solution', () => {
     const session = createSession({ content: activeContent(exercise), start: exercise.start })
     session.sendKeys(exercise.solution)

@@ -137,6 +137,22 @@ describe('session line numbers', () => {
     expect(s.getState().options.number).toBe(true)
   })
 
+  it('restores the line number options and the gutter on reset', () => {
+    const s = createSession({
+      parent: document.body,
+      content: 'a\nb',
+      start: { line: 1, col: 1 },
+      lineNumbers: true,
+    })
+    session = s
+    s.sendKeys(':set nonumber<CR>:set norelativenumber<CR>')
+    expect(s.view.dom.querySelector('.cm-lineNumbers')).toBeNull()
+
+    s.reset()
+    expect(s.getState().options).toEqual({ number: true, relativenumber: true })
+    expect(s.view.dom.querySelector('.cm-lineNumbers')).not.toBeNull()
+  })
+
   it('switches between relative and absolute numbers with :set norelativenumber', () => {
     const s = createSession({
       parent: document.body,

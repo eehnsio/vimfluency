@@ -65,7 +65,8 @@ const lockedInput = EditorView.domEventHandlers({
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
-  const numberOptions: NumberOptions = { number: true, relativenumber: true }
+  const initialNumberOptions: NumberOptions = { number: true, relativenumber: true }
+  const numberOptions: NumberOptions = { ...initialNumberOptions }
   const numbers = new Compartment()
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
@@ -84,11 +85,14 @@ export function createSession(options: SessionOptions): Session {
     parent: options.parent ?? document.createElement('div'),
   })
   const cm = getCM(view)!
-  optionHandlers.set(cm, (name, value) => {
-    numberOptions[name] = value
+  const applyNumberOptions = () => {
     if (options.lineNumbers) {
       view.dispatch({ effects: numbers.reconfigure(lineNumberExtension(numberOptions)) })
     }
+  }
+  optionHandlers.set(cm, (name, value) => {
+    numberOptions[name] = value
+    applyNumberOptions()
     notify()
   })
   const { allowedKeys, onBlocked } = options
@@ -172,6 +176,8 @@ export function createSession(options: SessionOptions): Session {
   function reset() {
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: content } })
     Vim.handleKey(cm, '<Esc>', 'user')
+    Object.assign(numberOptions, initialNumberOptions)
+    applyNumberOptions()
     placeCursor()
     notify()
   }
