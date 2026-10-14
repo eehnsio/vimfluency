@@ -73,7 +73,7 @@ Viktiga regler:
 - **Ordning** styrs i `<kategori>/index.ts` (inom kategori) och `registry.ts` (kategorier). Övningar känner inte till varandra.
 - **Ny övning:** ny mapp med `exercise.ts` och `files/`, plus en rad i kategorins `index.ts`. Testerna kräver att lösningen faktiskt klarar alla checkar och att övningen inte är löst vid start.
 - **Checks:** `cursorAt` (kolumn valfri), `contentEquals`, `contentUnchanged`, `mode`, `option` (`:set number`/`relativenumber`). Rörelseövningar ska ha `contentUnchanged`, annars kan man radera sig till rätt position.
-- **Lås:** tillåtna tangenter är lösningens tangenter plus `allowedKeys` (t.ex. `u`), alla siffror om lösningen har ett count, och `Esc`. Backspace är alltid tillåtet i insert-läge och i `:`/`/`-prompten, så man kan sudda när man skrivit fel. `sendKeys` är inte låst, så referenslösningar kan köras i tester.
+- **Lås:** tillåtna tangenter är lösningens tangenter plus `allowedKeys` (t.ex. `u`), alla siffror om lösningen har ett count, och `Esc`. Backspace är alltid tillåtet i insert-läge och i `:`/`/`-prompten, så man kan sudda när man skrivit fel. `sendKeys` är inte låst, så referenslösningar kan köras i tester. Utöver tangentfiltret avvisar ett `transactionFilter` inklistring, drop, IME-komposition och klipp ut. `r` är nödutgången och får därför inte vara ett normalläges-kommando i någon lösning (testas i `exercises.test.ts`).
 - Övningsfilerna i `files/` är innehåll, inte appkod. De är uteslutna från tsconfig och lint och får innehålla trasig kod med flit. Filer slutar utan radbrytning så att `G` landar på sista kodraden.
 - Kommentarer i övningsfiler ingår i innehållet. De får inte matcha sökmönster som lösningen använder (t.ex. `:%s/count/…`).
 
@@ -84,6 +84,7 @@ Kända begränsningar:
 - `j`/`k` kräver layout. Testerna har en radbaserad polyfill i `src/test/setup.ts`. `j` via riktiga tangenter mot en monterad editor i jsdom fungerar inte, så integrationstester använder en övning med `w`.
 - `:set number`, `:set nu`, `:set relativenumber` och `:set rnu` styr radnumren. De är definierade med `Vim.defineOption` i `session.ts`. `:set nu!` (toggle) stöds inte av pluginet.
 - `/` och `:` öppnar en DOM-input i pluginet. `session.ts` matar in tangenterna där. Vanliga tecken i insert-läge skrivs med `view.dispatch`.
+- Bygget får en Content-Security-Policy via `vite.config.ts` (bara `build`, inte dev). `style-src 'unsafe-inline'` krävs för att CodeMirror lägger in `<style>` vid körning. Nya externa resurser (typsnitt, CDN) kräver ändring där.
 - macOS tryck-och-håll (accenttecken) kan inte stängas av från webben: `defaults write com.google.Chrome ApplePressAndHoldEnabled -bool false`.
 
 ## Saker agenten INTE ska göra
