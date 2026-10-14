@@ -1,7 +1,7 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
-import { allExercises } from './exercises/registry'
+import { allExercises, getExercise } from './exercises/registry'
 
 beforeEach(() => localStorage.clear())
 
@@ -29,20 +29,25 @@ describe('App', () => {
 
   it('shows the file in the editor', () => {
     render(<App />)
-    expect(screen.getByText('src/Counter.tsx', { selector: 'span' })).toBeInTheDocument()
-    expect(document.querySelector('.cm-content')).toHaveTextContent('useState')
+    const first = allExercises[0]
+    expect(screen.getByText(first.activeFile, { selector: 'span' })).toBeInTheDocument()
+    expect(document.querySelector('.cm-content')).toHaveTextContent('Goal:')
   })
 })
 
 describe('App completion flow', () => {
   it('marks the exercise complete when the solution is typed', async () => {
+    // word-jumps använder w, som inte beror på layout. j/k gör det och kan inte
+    // köras mot en monterad editor i jsdom (ingen posAtCoords), men bevisas
+    // i exercises.test.ts.
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
     const user = userEvent.setup()
     render(<App />)
-    const content = document.querySelector<HTMLElement>('.cm-content')!
-    content.focus()
-    await user.keyboard('4w')
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    await user.keyboard(exercise.solution)
     expect(await screen.findByRole('status')).toHaveTextContent('Exercise complete')
-    expect(screen.getByRole('button', { name: /Jump between words/ })).toHaveTextContent('(completed)')
-    expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toContain('word-jumps')
+    expect(screen.getByRole('button', { name: new RegExp(exercise.title) })).toHaveTextContent('(completed)')
+    expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toContain(exercise.id)
   })
 })
