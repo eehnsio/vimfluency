@@ -1,5 +1,11 @@
 export type Mode = 'normal' | 'insert' | 'visual'
 
+/** Vim-alternativen som `:set` styr radnumren med. */
+export interface NumberOptions {
+  number: boolean
+  relativenumber: boolean
+}
+
 export interface Category {
   id: string
   title: string
@@ -16,12 +22,12 @@ export interface VirtualFile {
 export type Check =
   /** 1-indexerat, som i vim. */
   | { type: 'cursorAt'; line: number; col?: number }
-  | { type: 'contentEquals'; file?: string; expected: string }
+  | { type: 'contentEquals'; expected: string }
   /** Innehållet i aktiv fil är orört, så en rörelse-övning inte klaras genom att radera. */
   | { type: 'contentUnchanged' }
   | { type: 'mode'; mode: Mode }
   /** Ett vim-alternativ (`:set number`) har ett visst värde. */
-  | { type: 'option'; name: 'number' | 'relativenumber'; value: boolean }
+  | { type: 'option'; name: keyof NumberOptions; value: boolean }
 
 export interface Exercise {
   id: string

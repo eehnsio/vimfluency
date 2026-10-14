@@ -8,7 +8,7 @@ interface Stored {
   /** Användaren har skrivit `nvim` i introt och behöver inte göra det igen. */
   openedNvim?: boolean
   /** Övningar där lösningen visades. Klarade med hjälp. */
-  assisted?: string[]
+  assisted: string[]
 }
 
 function load(): Stored {
@@ -26,7 +26,7 @@ function load(): Stored {
   } catch {
     // Korrupt eller otillgänglig lagring: börja om.
   }
-  return { completed: [] }
+  return { completed: [], assisted: [] }
 }
 
 function save(stored: Stored) {
@@ -61,7 +61,7 @@ export function useProgress() {
   const markAssisted = useCallback(
     (id: string) =>
       update((current) =>
-        current.assisted?.includes(id) ? current : { ...current, assisted: [...(current.assisted ?? []), id] },
+        current.assisted.includes(id) ? current : { ...current, assisted: [...current.assisted, id] },
       ),
     [update],
   )
@@ -72,7 +72,7 @@ export function useProgress() {
     completed: new Set(stored.completed),
     lastId: stored.lastId,
     openedNvim: stored.openedNvim === true,
-    assisted: new Set(stored.assisted ?? []),
+    assisted: new Set(stored.assisted),
     markAssisted,
     markCompleted,
     select,

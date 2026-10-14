@@ -4,8 +4,8 @@ import { Vim, getCM, vim } from '@replit/codemirror-vim'
 import type { EditorState as SessionState } from './checks'
 import { parseKeys } from './keys'
 import { keyFromEvent } from './lock'
-import { lineNumberExtension, type NumberOptions } from './lineNumbers'
-import type { Mode } from '../exercises/types'
+import { lineNumberExtension } from './lineNumbers'
+import type { Mode, NumberOptions } from '../exercises/types'
 
 export interface SessionOptions {
   parent?: HTMLElement

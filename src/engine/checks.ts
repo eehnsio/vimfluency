@@ -1,4 +1,4 @@
-import type { Check, Mode } from '../exercises/types'
+import type { Check, Mode, NumberOptions } from '../exercises/types'
 
 export interface EditorState {
   content: string
@@ -6,7 +6,7 @@ export interface EditorState {
   cursor: { line: number; col: number }
   mode: Mode
   /** Alternativ som `:set` ändrar. */
-  options: { number: boolean; relativenumber: boolean }
+  options: NumberOptions
 }
 
 export interface CheckResult {
