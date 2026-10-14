@@ -1,6 +1,7 @@
 import { evaluate } from '../engine/checks'
 import { parseKeys } from '../engine/keys'
-import { createSession } from '../engine/session'
+import { createExerciseSession } from '../engine/exerciseSession'
+import type { Session } from '../engine/session'
 import { activeContent } from './define'
 import { allExercises, categories, getExercise, nextExercise } from './registry'
 
@@ -38,24 +39,36 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     }
   })
 
+  // Sessionen byggs som i appen (låst, med TSX och tema), annars missar testerna
+  // fel som bara uppstår med låset på.
+  const open = (onBlocked?: (key: string) => void) => createExerciseSession(exercise, { onBlocked })
+  const evaluateNow = (session: Session) =>
+    evaluate(exercise.checks, session.getState(), activeContent(exercise))
+
   it('is not solved at the start', () => {
-    const session = createSession({ content: activeContent(exercise), start: exercise.start })
-    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).passed).toBe(false)
+    const session = open()
+    expect(evaluateNow(session).passed).toBe(false)
+    session.destroy()
+  })
+
+  it('is solved by the reference solution', () => {
+    const session = open()
+    session.sendKeys(exercise.solution)
+    expect(evaluateNow(session).failed).toEqual([])
     session.destroy()
   })
 
   it('is not solved after solving it and resetting', () => {
-    const session = createSession({ content: activeContent(exercise), start: exercise.start })
+    const session = open()
     session.sendKeys(exercise.solution)
     session.reset()
-    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).passed).toBe(false)
+    expect(evaluateNow(session).passed).toBe(false)
     session.destroy()
   })
 
-  it('does not need r as a normal-mode key, which is the emergency exit', () => {
-    // `r` är låst och startar om övningen. Står den som kommando i lösningen blir den
-    // tillåten och nödutgången fungerar inte. Text i insert-läge och i prompter är okej.
-    const session = createSession({ content: activeContent(exercise), start: exercise.start })
+  it('does not use r as a normal-mode command, since r is the emergency exit', () => {
+    // Text i insert-läge och i prompter är okej. Se `createKeyLock`.
+    const session = open()
     const rAsCommand: number[] = []
     parseKeys(exercise.solution).forEach((key, index) => {
       const inPrompt = session.view.dom.querySelector('input') !== null
@@ -66,11 +79,17 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     expect(rAsCommand).toEqual([])
   })
 
-  it('is solved by the reference solution', () => {
-    const session = createSession({ content: activeContent(exercise), start: exercise.start })
+  it('can always be started over with r in normal mode', () => {
+    const blocked: string[] = []
+    const session = open((key) => {
+      blocked.push(key)
+      if (key === 'r') session.reset()
+    })
     session.sendKeys(exercise.solution)
-    const result = evaluate(exercise.checks, session.getState(), activeContent(exercise))
-    expect(result.failed).toEqual([])
+    session.view.contentDOM.dispatchEvent(new KeyboardEvent('keydown', { key: 'r', bubbles: true, cancelable: true }))
+    expect(blocked).toEqual(['r'])
+    expect(session.view.state.doc.toString()).toBe(activeContent(exercise))
+    expect(session.getState().cursor).toEqual(exercise.start)
     session.destroy()
   })
 })

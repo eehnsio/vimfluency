@@ -240,12 +240,20 @@ describe('session lock', () => {
     expect(paste.defaultPrevented).toBe(true)
   })
 
-  it('rejects pasted, dropped and composed text even when the DOM events are bypassed', () => {
+  it('rejects pasted, dropped and cut text even when the DOM events are bypassed', () => {
     const { s } = locked('abc', ['w'])
-    for (const userEvent of ['input.paste', 'input.drop', 'input.type.compose', 'delete.cut']) {
+    for (const userEvent of ['input.paste', 'input.drop', 'delete.cut', 'delete.dragged']) {
       s.view.dispatch({ changes: { from: 0, insert: 'X' }, userEvent })
     }
     expect(s.getState().content).toBe('abc')
+  })
+
+  it("lets the vim plugin's own edits through while locked (cw, dd, x)", () => {
+    const { s } = locked('const a = Hello', ['c', 'w', 'W', 'o', 'r', 'l', 'd', 'x'])
+    s.sendKeys('3wcwWorld<Esc>')
+    expect(s.getState().content).toBe('const a = World')
+    s.sendKeys('x')
+    expect(s.getState().content).toBe('const a = Worl')
   })
 
   it('still applies programmatic changes and typed text while locked', () => {
@@ -259,6 +267,43 @@ describe('session lock', () => {
     open('abc')
     session!.view.dispatch({ changes: { from: 0, insert: 'X' }, userEvent: 'input.paste' })
     expect(session!.getState().content).toBe('Xabc')
+  })
+
+  it('treats r as the emergency exit even when the solution contains an r', () => {
+    const { s, onBlocked } = locked('hello', ['c', 'w', 'r', 'd', 'W', 'o', 'l'])
+    press(s.view.contentDOM, { key: 'r' })
+    expect(onBlocked).toHaveBeenCalledWith('r')
+  })
+
+  it('still types r in insert mode and in prompts', () => {
+    const { s, onBlocked } = locked('hello', ['i', 'r', ':'])
+    s.sendKeys('i')
+    press(s.view.contentDOM, { key: 'r' })
+    s.sendKeys('<Esc>:')
+    press(s.view.dom.querySelector('input')!, { key: 'r' })
+    expect(onBlocked).not.toHaveBeenCalled()
+  })
+
+  it('closes an open prompt on reset', () => {
+    // `<Esc>` är alltid tillåten i appen (`deriveAllowedKeys`), och reset stänger prompten med den.
+    const { s } = locked('hello', [':', '<Esc>'])
+    s.sendKeys(':')
+    expect(s.view.dom.querySelector('input')).not.toBeNull()
+    s.reset()
+    expect(s.view.dom.querySelector('input')).toBeNull()
+  })
+
+  it('notifies listeners even when a key makes the plugin throw', () => {
+    const s = open('abc')
+    const listener = vi.fn()
+    s.subscribe(listener)
+    // Ett tangentnamn pluginet inte känner igen, efter en giltig tangent.
+    vi.spyOn(s.view.dom, 'querySelector').mockImplementation(() => {
+      throw new Error('boom')
+    })
+    expect(() => s.sendKeys('w')).toThrow('boom')
+    expect(listener).toHaveBeenCalled()
+    vi.restoreAllMocks()
   })
 
   it('leaves sendKeys unrestricted so reference solutions can run', () => {

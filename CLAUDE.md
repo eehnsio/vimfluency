@@ -57,6 +57,8 @@ src/
     exercises.test.ts       # bevisar alla övningar
   engine/
     keys.ts                 # parseKeys("3w<Esc>") → tangenter
+    exerciseSession.ts      # createExerciseSession: sessionen som användaren möter (lås, TSX, tema), delad av UI och tester
+    vimInput.ts             # tangentmatning (prompt/insert/normal) och tangentlåset createKeyLock
     session.ts              # createSession: EditorView + vim, sendKeys, getState, reset, subscribe, lås
     checks.ts               # evaluate(checks, state, initialContent)
     lock.ts                 # whitelist av tangenter härledd från lösningen
@@ -73,7 +75,7 @@ Viktiga regler:
 - **Ordning** styrs i `<kategori>/index.ts` (inom kategori) och `registry.ts` (kategorier). Övningar känner inte till varandra.
 - **Ny övning:** ny mapp med `exercise.ts` och `files/`, plus en rad i kategorins `index.ts`. Testerna kräver att lösningen faktiskt klarar alla checkar och att övningen inte är löst vid start.
 - **Checks:** `cursorAt` (kolumn valfri), `contentEquals`, `contentUnchanged`, `mode`, `option` (`:set number`/`relativenumber`). Rörelseövningar ska ha `contentUnchanged`, annars kan man radera sig till rätt position.
-- **Lås:** tillåtna tangenter är lösningens tangenter plus `allowedKeys` (t.ex. `u`), alla siffror om lösningen har ett count, och `Esc`. Backspace är alltid tillåtet i insert-läge och i `:`/`/`-prompten, så man kan sudda när man skrivit fel. `sendKeys` är inte låst, så referenslösningar kan köras i tester. Utöver tangentfiltret avvisar ett `transactionFilter` inklistring, drop, IME-komposition och klipp ut. `r` är nödutgången och får därför inte vara ett normalläges-kommando i någon lösning (testas i `exercises.test.ts`).
+- **Lås:** tillåtna tangenter är lösningens tangenter plus `allowedKeys` (t.ex. `u`), alla siffror om lösningen har ett count, och `Esc`. Backspace är alltid tillåtet i insert-läge och i `:`/`/`-prompten, så man kan sudda när man skrivit fel. `sendKeys` är inte låst, så referenslösningar kan köras i tester. Utöver tangentfiltret avvisar ett `transactionFilter` inklistring, drop och klipp ut (`input.paste`, `input.drop`, `delete.cut`). Blockera aldrig `input.type.compose`: pluginet skickar alla sina egna redigeringar (`d`, `c`, `x`…) med den. `r` är nödutgången och räknas som låst i normalläge även när lösningen innehåller ett `r` (t.ex. i texten man skriver), men är ett vanligt tecken i insert-läge och prompter. Därför får ingen lösning använda `r` som normalläges-kommando (testas i `exercises.test.ts`). Övningstesterna bygger sessionen med `createExerciseSession`, samma som appen, så att låset ingår i beviset.
 - Övningsfilerna i `files/` är innehåll, inte appkod. De är uteslutna från tsconfig och lint och får innehålla trasig kod med flit. Filer slutar utan radbrytning så att `G` landar på sista kodraden.
 - Kommentarer i övningsfiler ingår i innehållet. De får inte matcha sökmönster som lösningen använder (t.ex. `:%s/count/…`).
 
