@@ -15,13 +15,13 @@ afterEach(() => {
 describe('session', () => {
   it('starts at the given position in normal mode', () => {
     const s = open('abc\ndef', 2, 2)
-    expect(s.getState()).toMatchObject({ cursor: { line: 2, col: 2 }, mode: 'normal', keystrokes: 0 })
+    expect(s.getState()).toMatchObject({ cursor: { line: 2, col: 2 }, mode: 'normal' })
   })
 
-  it('runs normal-mode motions and counts keystrokes', () => {
+  it('runs normal-mode motions', () => {
     const s = open('const count = 1')
     s.sendKeys('3w')
-    expect(s.getState()).toMatchObject({ cursor: { line: 1, col: 15 }, keystrokes: 2 })
+    expect(s.getState()).toMatchObject({ cursor: { line: 1, col: 15 } })
   })
 
   it('jumps to a matching brace with %', () => {
@@ -72,7 +72,7 @@ describe('session', () => {
     expect(s.getState().mode).toBe('visual')
   })
 
-  it('resets content, cursor, mode and keystrokes', () => {
+  it('resets content, cursor and mode', () => {
     const s = open('abc def', 1, 2)
     s.sendKeys('dwi!')
     s.reset()
@@ -80,7 +80,6 @@ describe('session', () => {
       content: 'abc def',
       cursor: { line: 1, col: 2 },
       mode: 'normal',
-      keystrokes: 0,
     })
   })
 })

@@ -18,12 +18,10 @@ export interface Session {
   sendKeys(notation: string): void
   getState(): SessionState
   reset(): void
-  /** Anropas när innehåll, markör, läge eller tangenträkning kan ha ändrats. */
+  /** Anropas när innehåll, markör, läge eller läge kan ha ändrats. */
   subscribe(listener: () => void): () => void
   destroy(): void
 }
-
-const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'])
 
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
@@ -39,14 +37,6 @@ export function createSession(options: SessionOptions): Session {
     parent: options.parent ?? document.createElement('div'),
   })
   const cm = getCM(view)!
-  let keystrokes = 0
-
-  // Bara riktiga tangenttryck från användaren räknas här. Programmatiska
-  // tangenter räknas i sendKeys, och deras syntetiska events är inte trusted.
-  const onKeyDown = (event: KeyboardEvent) => {
-    if (event.isTrusted && !MODIFIER_KEYS.has(event.key)) keystrokes += 1
-  }
-  view.dom.addEventListener('keydown', onKeyDown, true)
   // keyup kommer efter att pluginet hanterat tangenten, så läget är uppdaterat.
   view.dom.addEventListener('keyup', notify, true)
   cm.on('vim-mode-change', notify)
@@ -78,8 +68,6 @@ export function createSession(options: SessionOptions): Session {
 
   function sendKeys(notation: string) {
     for (const key of parseKeys(notation)) {
-      keystrokes += 1
-
       const input = promptInput()
       if (input) {
         // En öppen prompt (`:`, `/`, `?`) tar emot tangenterna i sitt inputfält.
@@ -111,7 +99,6 @@ export function createSession(options: SessionOptions): Session {
       content: view.state.doc.toString(),
       cursor: { line: head.line + 1, col: head.ch + 1 },
       mode: getMode(),
-      keystrokes,
     }
   }
 
@@ -119,7 +106,6 @@ export function createSession(options: SessionOptions): Session {
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: content } })
     Vim.handleKey(cm, '<Esc>', 'user')
     placeCursor()
-    keystrokes = 0
     notify()
   }
 
@@ -130,7 +116,6 @@ export function createSession(options: SessionOptions): Session {
 
   function destroy() {
     listeners.clear()
-    view.dom.removeEventListener('keydown', onKeyDown, true)
     view.dom.removeEventListener('keyup', notify, true)
     view.destroy()
   }

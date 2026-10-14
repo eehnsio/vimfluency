@@ -38,13 +38,11 @@ export default function App() {
           <VimEditor containerRef={containerRef} />
           {completed && state && (
             <CompletionBanner
-              keystrokes={state.keystrokes}
-              par={exercise.par}
               onReset={reset}
               onNext={next ? () => progress.select(next.id) : undefined}
             />
           )}
-          <StatusLine state={state} par={exercise.par} />
+          <StatusLine state={state} />
         </TerminalPane>
       </main>
     </div>

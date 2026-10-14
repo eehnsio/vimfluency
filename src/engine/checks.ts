@@ -5,7 +5,6 @@ export interface EditorState {
   /** 1-indexerat, som i vim. */
   cursor: { line: number; col: number }
   mode: Mode
-  keystrokes: number
 }
 
 export interface CheckResult {
@@ -13,18 +12,20 @@ export interface CheckResult {
   failed: Check[]
 }
 
-function passes(check: Check, state: EditorState): boolean {
+function passes(check: Check, state: EditorState, initialContent: string): boolean {
   switch (check.type) {
     case 'cursorAt':
       return state.cursor.line === check.line && state.cursor.col === check.col
     case 'contentEquals':
       return state.content === check.expected
+    case 'contentUnchanged':
+      return state.content === initialContent
     case 'mode':
       return state.mode === check.mode
   }
 }
 
-export function evaluate(checks: Check[], state: EditorState): CheckResult {
-  const failed = checks.filter((check) => !passes(check, state))
+export function evaluate(checks: Check[], state: EditorState, initialContent: string): CheckResult {
+  const failed = checks.filter((check) => !passes(check, state, initialContent))
   return { passed: failed.length === 0, failed }
 }

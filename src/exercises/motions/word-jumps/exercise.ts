@@ -11,10 +11,9 @@ export default defineExercise(
       'Count the words between `const` and `setCount`, then prefix `w` with that number.',
     ],
     activeFile: 'src/Counter.tsx',
-    start: { line: 4, col: 3 },
-    checks: [{ type: 'cursorAt', line: 4, col: 17 }],
+    start: { line: 8, col: 3 },
+    checks: [{ type: 'cursorAt', line: 8, col: 17 }, { type: 'contentUnchanged' }],
     solution: '4w',
-    par: 2,
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

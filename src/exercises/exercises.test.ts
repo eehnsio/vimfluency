@@ -1,5 +1,4 @@
 import { evaluate } from '../engine/checks'
-import { parseKeys } from '../engine/keys'
 import { createSession } from '../engine/session'
 import { allExercises, categories, getExercise, nextExercise } from './registry'
 import type { Exercise } from './types'
@@ -43,20 +42,15 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
 
   it('is not solved at the start', () => {
     const session = createSession({ content: activeContent(exercise), start: exercise.start })
-    expect(evaluate(exercise.checks, session.getState()).passed).toBe(false)
+    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).passed).toBe(false)
     session.destroy()
   })
 
   it('is solved by the reference solution', () => {
     const session = createSession({ content: activeContent(exercise), start: exercise.start })
     session.sendKeys(exercise.solution)
-    const result = evaluate(exercise.checks, session.getState())
+    const result = evaluate(exercise.checks, session.getState(), activeContent(exercise))
     expect(result.failed).toEqual([])
     session.destroy()
-  })
-
-  it('does not exceed par', () => {
-    if (exercise.par === undefined) return
-    expect(parseKeys(exercise.solution).length).toBeLessThanOrEqual(exercise.par)
   })
 })

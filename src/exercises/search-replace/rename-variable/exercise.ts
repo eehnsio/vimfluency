@@ -1,6 +1,9 @@
 import { defineExercise } from '../../define'
 
-const expected = `import { useState } from 'react'
+const expected = `// Goal: give the state variable the name \`total\` everywhere it is used.
+// \`:%s/old/new/g\` replaces every match on every line. Finish with Enter.
+
+import { useState } from 'react'
 
 export function Tally() {
   const [total, update] = useState(0)
@@ -20,7 +23,6 @@ export default defineExercise(
     start: { line: 1, col: 1 },
     checks: [{ type: 'contentEquals', expected }],
     solution: ':%s/count/total/g<CR>',
-    par: 18,
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

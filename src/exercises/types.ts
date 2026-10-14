@@ -17,6 +17,8 @@ export type Check =
   /** 1-indexerat, som i vim. */
   | { type: 'cursorAt'; line: number; col: number }
   | { type: 'contentEquals'; file?: string; expected: string }
+  /** Innehållet i aktiv fil är orört, så en rörelse-övning inte klaras genom att radera. */
+  | { type: 'contentUnchanged' }
   | { type: 'mode'; mode: Mode }
 
 export interface Exercise {
@@ -30,6 +32,4 @@ export interface Exercise {
   checks: Check[]
   /** Referenslösning i vim-notation. */
   solution: string
-  /** Optimalt antal tangenttryck. */
-  par?: number
 }

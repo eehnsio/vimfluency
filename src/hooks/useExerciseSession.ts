@@ -27,7 +27,7 @@ export function useExerciseSession(exercise: Exercise) {
     const sync = () => {
       const next = session.getState()
       setState(next)
-      if (evaluate(exercise.checks, next).passed) setCompleted(true)
+      if (evaluate(exercise.checks, next, file.content).passed) setCompleted(true)
     }
     const unsubscribe = session.subscribe(sync)
     setState(session.getState())
