@@ -48,7 +48,8 @@ export function StatusLine({ state, filename, blockedKey }: Props) {
         {blockedKey && (
           <span role="alert">
             <code className="rounded bg-surface-raised px-1 text-fg">{blockedKey}</code> is locked in this
-            exercise
+            exercise. Stuck? Press <code className="rounded bg-surface-raised px-1 text-fg">r</code> to start
+            over.
           </span>
         )}
       </div>

@@ -72,6 +72,23 @@ describe('App completion flow', () => {
 })
 
 describe('App locking', () => {
+  it('lets r start the exercise over when stuck', async () => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    const user = userEvent.setup()
+    render(<App />)
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    const position = () => screen.getByText(/^\d+:\d+$/).textContent
+    const start = position()
+
+    await user.keyboard('w')
+    expect(position()).not.toBe(start)
+    await user.keyboard('b') // låst, men inte nödutgången
+    await user.keyboard('r')
+    expect(position()).toBe(start)
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+
   it('blocks keys that are not part of the exercise and says so', async () => {
     const exercise = getExercise('word-jumps')!
     localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))

@@ -10,6 +10,7 @@ import type { Exercise } from '../exercises/types'
 export function useExerciseSession(exercise: Exercise) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sessionRef = useRef<Session | null>(null)
+  const resetRef = useRef<() => void>(() => {})
   const [state, setState] = useState<EditorState | null>(null)
   const [completed, setCompleted] = useState(false)
   const [blockedKey, setBlockedKey] = useState<string | null>(null)
@@ -25,7 +26,9 @@ export function useExerciseSession(exercise: Exercise) {
       start: exercise.start,
       extensions: [javascript({ jsx: true, typescript: true }), relativeLineNumbers, editorTheme],
       allowedKeys: deriveAllowedKeys(exercise.solution, exercise.allowedKeys),
-      onBlocked: setBlockedKey,
+      // `r` är låst som alla andra tangenter som inte hör till övningen, men
+      // används som nödutgång så att man aldrig fastnar efter att ha missat målet.
+      onBlocked: (key) => (key === 'r' ? resetRef.current() : setBlockedKey(key)),
     })
     sessionRef.current = session
 
@@ -50,8 +53,13 @@ export function useExerciseSession(exercise: Exercise) {
   const reset = useCallback(() => {
     sessionRef.current?.reset()
     setCompleted(false)
+    setBlockedKey(null)
     sessionRef.current?.view.focus()
   }, [])
+
+  useEffect(() => {
+    resetRef.current = reset
+  }, [reset])
 
   return { containerRef, state, completed, blockedKey, reset }
 }
