@@ -69,6 +69,8 @@ export function createSession(options: SessionOptions): Session {
     if (!allowedKeys) return
     const key = keyFromEvent(event)
     if (key === null || allowedKeys.has(key)) return
+    // Man ska alltid kunna sudda när man skrivit fel, i insert-läge och i prompter.
+    if (key === '<BS>' && (getMode() === 'insert' || promptInput())) return
     event.preventDefault()
     event.stopPropagation()
     onBlocked?.(key)

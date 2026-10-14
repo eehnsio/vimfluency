@@ -156,6 +156,22 @@ describe('session lock', () => {
     expect(s.getState()).toMatchObject({ content: 'abc', cursor: { line: 1, col: 1 } })
   })
 
+  it('always allows Backspace in insert mode and prompts, but not in normal mode', () => {
+    const { s, onBlocked } = locked('abc', ['i', ':'])
+    press(s.view.contentDOM, { key: 'Backspace' })
+    expect(onBlocked).toHaveBeenCalledWith('<BS>')
+    onBlocked.mockClear()
+
+    press(s.view.contentDOM, { key: 'i' })
+    expect(s.getState().mode).toBe('insert')
+    press(s.view.contentDOM, { key: 'Backspace' })
+    expect(onBlocked).not.toHaveBeenCalled()
+
+    s.sendKeys('<Esc>:')
+    press(s.view.dom.querySelector('input')!, { key: 'Backspace' })
+    expect(onBlocked).not.toHaveBeenCalled()
+  })
+
   it('does not block browser shortcuts', () => {
     const { s, onBlocked } = locked('abc', ['w'])
     const event = press(s.view.contentDOM, { key: 'r', metaKey: true })
