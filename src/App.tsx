@@ -12,7 +12,7 @@ import { useProgress } from './hooks/useProgress'
 export default function App() {
   const progress = useProgress()
   const exercise = (progress.lastId && getExercise(progress.lastId)) || allExercises[0]
-  const { containerRef, state, completed, blockedKey, reset } = useExerciseSession(exercise)
+  const { containerRef, state, completed, blockedKey, overshot, reset } = useExerciseSession(exercise)
 
   const { markCompleted, select } = progress
   useEffect(() => {
@@ -57,7 +57,7 @@ export default function App() {
           {completed && (
             <CompletionBanner onReset={reset} onNext={nextId ? () => select(nextId) : undefined} />
           )}
-          <StatusLine state={state} filename={exercise.activeFile} blockedKey={blockedKey} />
+          <StatusLine state={state} filename={exercise.activeFile} blockedKey={blockedKey} overshot={overshot && !completed} />
         </TerminalPane>
       </main>
     </div>

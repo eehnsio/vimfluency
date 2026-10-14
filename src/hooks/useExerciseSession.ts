@@ -4,6 +4,7 @@ import { relativeLineNumbers } from '../engine/lineNumbers'
 import { evaluate, type EditorState } from '../engine/checks'
 import { editorTheme } from '../engine/editorTheme'
 import { deriveAllowedKeys } from '../engine/lock'
+import { cursorTarget, overshotTarget } from '../engine/overshoot'
 import { createSession, type Session } from '../engine/session'
 import type { Exercise } from '../exercises/types'
 
@@ -14,6 +15,7 @@ export function useExerciseSession(exercise: Exercise) {
   const [state, setState] = useState<EditorState | null>(null)
   const [completed, setCompleted] = useState(false)
   const [blockedKey, setBlockedKey] = useState<string | null>(null)
+  const [overshot, setOvershot] = useState(false)
 
   useEffect(() => {
     const parent = containerRef.current
@@ -32,15 +34,26 @@ export function useExerciseSession(exercise: Exercise) {
     })
     sessionRef.current = session
 
+    const target = cursorTarget(exercise.checks)
+    let previous = session.getState().cursor
+
     const sync = () => {
       const next = session.getState()
       setState(next)
+      if (target && next.mode === 'normal') {
+        const moved = next.cursor.line !== previous.line || next.cursor.col !== previous.col
+        // Står kvar tills man startar om eller landar på målet.
+        if (moved && overshotTarget(previous, next.cursor, target)) setOvershot(true)
+        previous = next.cursor
+      }
       if (evaluate(exercise.checks, next, file.content).passed) setCompleted(true)
     }
     const unsubscribe = session.subscribe(sync)
     setState(session.getState())
     setCompleted(false)
     setBlockedKey(null)
+    setOvershot(false)
+    setOvershot(false)
     session.view.focus()
 
     return () => {
@@ -61,5 +74,5 @@ export function useExerciseSession(exercise: Exercise) {
     resetRef.current = reset
   }, [reset])
 
-  return { containerRef, state, completed, blockedKey, reset }
+  return { containerRef, state, completed, blockedKey, overshot, reset }
 }

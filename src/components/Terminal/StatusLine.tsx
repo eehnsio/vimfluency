@@ -4,6 +4,8 @@ interface Props {
   state: EditorState | null
   filename: string
   blockedKey?: string | null
+  /** Markören hoppade förbi målet. */
+  overshot?: boolean
 }
 
 const MODE_COLOR = {
@@ -31,7 +33,7 @@ function scrollPercent(state: EditorState) {
 }
 
 /** Statusraden som i nvim, följd av kommandoraden där meddelanden visas. */
-export function StatusLine({ state, filename, blockedKey }: Props) {
+export function StatusLine({ state, filename, blockedKey, overshot }: Props) {
   const mode = state?.mode ?? 'normal'
   return (
     <div className="font-mono text-sm">
@@ -45,6 +47,12 @@ export function StatusLine({ state, filename, blockedKey }: Props) {
         </span>
       </div>
       <div className="h-7 px-3 py-1 text-xs text-fg-muted">
+        {overshot && !blockedKey && (
+          <span role="alert" className="text-danger">
+            You went past the target. Press{' '}
+            <code className="rounded bg-surface-raised px-1 text-fg">r</code> to start over.
+          </span>
+        )}
         {blockedKey && (
           <span role="alert">
             <code className="rounded bg-surface-raised px-1 text-fg">{blockedKey}</code> is locked in this

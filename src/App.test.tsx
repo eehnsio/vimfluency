@@ -71,6 +71,21 @@ describe('App completion flow', () => {
   })
 })
 
+describe('App overshoot feedback', () => {
+  it('says so when the cursor jumps past the target, and r recovers', async () => {
+    const exercise = getExercise('word-jumps')! // 4w från (8,3) till (8,17)
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    const user = userEvent.setup()
+    render(<App />)
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+
+    await user.keyboard('6w')
+    expect(await screen.findByRole('alert')).toHaveTextContent('You went past the target')
+    await user.keyboard('r')
+    expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
 describe('App locking', () => {
   it('lets r start the exercise over when stuck', async () => {
     const exercise = getExercise('word-jumps')!
