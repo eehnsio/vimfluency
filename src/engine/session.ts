@@ -48,19 +48,31 @@ function defineToggle(name: OptionName, aliases: string[]) {
 defineToggle('number', ['nu'])
 defineToggle('relativenumber', ['rnu'])
 
-/** Låser musen och andra inmatningssätt än tangentbordet i övningsläge. */
-const lockedInput = EditorView.domEventHandlers({
-  mousedown(event, view) {
-    event.preventDefault()
-    view.focus()
-    return true
-  },
-  dblclick: (event) => (event.preventDefault(), true),
-  dragstart: (event) => (event.preventDefault(), true),
-  drop: (event) => (event.preventDefault(), true),
-  paste: (event) => (event.preventDefault(), true),
-  cut: (event) => (event.preventDefault(), true),
-})
+/** Inmatningssätt som aldrig är tangenttryck. IME-komposition och tryck-och-håll hamnar här. */
+const BLOCKED_USER_EVENTS = ['input.paste', 'input.drop', 'input.type.compose', 'delete.cut', 'delete.dragged']
+
+/**
+ * Låser musen och andra inmatningssätt än tangentbordet i övningsläge. DOM-
+ * händelserna stoppas först, och transaktionsfiltret fångar det som ändå tar sig
+ * förbi (komposition, webbläsarens egna redigeringsåtgärder).
+ */
+const lockedInput: Extension = [
+  EditorView.domEventHandlers({
+    mousedown(event, view) {
+      event.preventDefault()
+      view.focus()
+      return true
+    },
+    dblclick: (event) => (event.preventDefault(), true),
+    dragstart: (event) => (event.preventDefault(), true),
+    drop: (event) => (event.preventDefault(), true),
+    paste: (event) => (event.preventDefault(), true),
+    cut: (event) => (event.preventDefault(), true),
+  }),
+  EditorState.transactionFilter.of((transaction) =>
+    BLOCKED_USER_EVENTS.some((event) => transaction.isUserEvent(event)) ? [] : transaction,
+  ),
+]
 
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options

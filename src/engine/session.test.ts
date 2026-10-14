@@ -240,6 +240,27 @@ describe('session lock', () => {
     expect(paste.defaultPrevented).toBe(true)
   })
 
+  it('rejects pasted, dropped and composed text even when the DOM events are bypassed', () => {
+    const { s } = locked('abc', ['w'])
+    for (const userEvent of ['input.paste', 'input.drop', 'input.type.compose', 'delete.cut']) {
+      s.view.dispatch({ changes: { from: 0, insert: 'X' }, userEvent })
+    }
+    expect(s.getState().content).toBe('abc')
+  })
+
+  it('still applies programmatic changes and typed text while locked', () => {
+    const { s } = locked('abc', ['i'])
+    s.view.dispatch({ changes: { from: 0, insert: 'X' } })
+    s.view.dispatch({ changes: { from: 0, insert: 'Y' }, userEvent: 'input.type' })
+    expect(s.getState().content).toBe('YXabc')
+  })
+
+  it('does not filter transactions when the session is not locked', () => {
+    open('abc')
+    session!.view.dispatch({ changes: { from: 0, insert: 'X' }, userEvent: 'input.paste' })
+    expect(session!.getState().content).toBe('Xabc')
+  })
+
   it('leaves sendKeys unrestricted so reference solutions can run', () => {
     const { s } = locked('foo bar', ['w'])
     s.sendKeys('e')
