@@ -36,4 +36,61 @@ describe('ExerciseList', () => {
     await userEvent.click(screen.getByRole('button', { name: target.title }))
     expect(onSelect).toHaveBeenCalledWith(target.id)
   })
+
+  describe('finished categories', () => {
+    const [first, second] = categories
+    const allOf = (...cats: typeof categories) => new Set(cats.flatMap((c) => c.exercises.map((e) => e.id)))
+    const heading = (title: string) => screen.getByRole('button', { name: title })
+
+    it('are collapsed, while unfinished ones stay open', () => {
+      render(
+        <ExerciseList
+          categories={categories}
+          selectedId={second.exercises[0].id}
+          completedIds={allOf(first)}
+          onSelect={() => {}}
+        />,
+      )
+      expect(heading(first.title)).toHaveAttribute('aria-expanded', 'false')
+      expect(screen.queryByRole('button', { name: new RegExp(first.exercises[0].title) })).not.toBeInTheDocument()
+      expect(heading(second.title)).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('stay open while they hold the selected exercise', () => {
+      render(
+        <ExerciseList
+          categories={categories}
+          selectedId={first.exercises[0].id}
+          completedIds={allOf(first)}
+          onSelect={() => {}}
+        />,
+      )
+      expect(heading(first.title)).toHaveAttribute('aria-expanded', 'true')
+    })
+
+    it('can be opened again and closed again', async () => {
+      const user = userEvent.setup()
+      render(
+        <ExerciseList
+          categories={categories}
+          selectedId={second.exercises[0].id}
+          completedIds={allOf(first)}
+          onSelect={() => {}}
+        />,
+      )
+      await user.click(heading(first.title))
+      expect(heading(first.title)).toHaveAttribute('aria-expanded', 'true')
+      expect(screen.getByRole('button', { name: new RegExp(first.exercises[0].title) })).toBeInTheDocument()
+
+      await user.click(heading(first.title))
+      expect(heading(first.title)).toHaveAttribute('aria-expanded', 'false')
+    })
+
+    it('can be collapsed by hand before they are finished', async () => {
+      const user = userEvent.setup()
+      render(<ExerciseList categories={categories} selectedId="x" completedIds={new Set()} onSelect={() => {}} />)
+      await user.click(heading(second.title))
+      expect(heading(second.title)).toHaveAttribute('aria-expanded', 'false')
+    })
+  })
 })
