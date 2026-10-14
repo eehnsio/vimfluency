@@ -1,0 +1,16 @@
+@theme {
+  --color-surface: #16181d;
+  --color-surface-raised: #1f222a;
+  --color-border: #2c303a;
+  --color-fg: #e6e8ee;
+  --color-fg-muted: #9097a5;
+  --color-accent: #7aa2f7;
+  --color-success: #9ece6a;
+  --color-term-bg: #0d0f13;
+  --color-term-fg: #c9d1d9;
+
+  --font-sans: ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+
+  --radius-panel: 0.5rem;
+}
