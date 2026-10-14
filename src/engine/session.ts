@@ -18,6 +18,8 @@ export interface Session {
   sendKeys(notation: string): void
   getState(): SessionState
   reset(): void
+  /** Anropas när innehåll, markör, läge eller tangenträkning kan ha ändrats. */
+  subscribe(listener: () => void): () => void
   destroy(): void
 }
 
@@ -26,8 +28,14 @@ const MODIFIER_KEYS = new Set(['Shift', 'Control', 'Alt', 'Meta', 'CapsLock'])
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
+  const listeners = new Set<() => void>()
+  const notify = () => listeners.forEach((listener) => listener())
+
   const view = new EditorView({
-    state: EditorState.create({ doc: content, extensions: [vim(), ...extensions] }),
+    state: EditorState.create({
+      doc: content,
+      extensions: [vim(), EditorView.updateListener.of(notify), ...extensions],
+    }),
     parent: options.parent ?? document.createElement('div'),
   })
   const cm = getCM(view)!
@@ -39,6 +47,9 @@ export function createSession(options: SessionOptions): Session {
     if (event.isTrusted && !MODIFIER_KEYS.has(event.key)) keystrokes += 1
   }
   view.dom.addEventListener('keydown', onKeyDown, true)
+  // keyup kommer efter att pluginet hanterat tangenten, så läget är uppdaterat.
+  view.dom.addEventListener('keyup', notify, true)
+  cm.on('vim-mode-change', notify)
 
   const placeCursor = () => cm.setCursor(start.line - 1, start.col - 1)
   placeCursor()
@@ -91,6 +102,7 @@ export function createSession(options: SessionOptions): Session {
 
       Vim.handleKey(cm, key, 'user')
     }
+    notify()
   }
 
   function getState(): SessionState {
@@ -108,12 +120,20 @@ export function createSession(options: SessionOptions): Session {
     Vim.handleKey(cm, '<Esc>', 'user')
     placeCursor()
     keystrokes = 0
+    notify()
+  }
+
+  function subscribe(listener: () => void) {
+    listeners.add(listener)
+    return () => listeners.delete(listener)
   }
 
   function destroy() {
+    listeners.clear()
     view.dom.removeEventListener('keydown', onKeyDown, true)
+    view.dom.removeEventListener('keyup', notify, true)
     view.destroy()
   }
 
-  return { view, sendKeys, getState, reset, destroy }
+  return { view, sendKeys, getState, reset, subscribe, destroy }
 }

@@ -84,3 +84,17 @@ describe('session', () => {
     })
   })
 })
+
+describe('session subscribe', () => {
+  it('notifies after keys are sent and stops after unsubscribe', () => {
+    const s = open('abc')
+    const listener = vi.fn()
+    const unsubscribe = s.subscribe(listener)
+    s.sendKeys('l')
+    expect(listener).toHaveBeenCalled()
+    listener.mockClear()
+    unsubscribe()
+    s.sendKeys('l')
+    expect(listener).not.toHaveBeenCalled()
+  })
+})
