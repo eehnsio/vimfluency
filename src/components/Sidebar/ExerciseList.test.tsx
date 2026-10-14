@@ -15,6 +15,20 @@ describe('ExerciseList', () => {
     expect(screen.getByRole('button', { name: `${done.title} (completed)` })).toBeInTheDocument()
   })
 
+  it('marks exercises completed with help differently', () => {
+    const done = categories[0].exercises[0]
+    render(
+      <ExerciseList
+        categories={categories}
+        selectedId="x"
+        completedIds={new Set([done.id])}
+        assistedIds={new Set([done.id])}
+        onSelect={() => {}}
+      />,
+    )
+    expect(screen.getByRole('button', { name: `${done.title} (completed with help)` })).toBeInTheDocument()
+  })
+
   it('reports the selected exercise', async () => {
     const onSelect = vi.fn()
     const target = categories[1].exercises[0]

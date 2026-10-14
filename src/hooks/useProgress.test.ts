@@ -32,6 +32,16 @@ describe('useProgress', () => {
     expect(renderHook(() => useProgress()).result.current.openedNvim).toBe(true)
   })
 
+  it('remembers which exercises were completed with help', () => {
+    const first = renderHook(() => useProgress())
+    act(() => {
+      first.result.current.markAssisted('a')
+      first.result.current.markAssisted('a')
+    })
+    expect([...first.result.current.assisted]).toEqual(['a'])
+    expect([...renderHook(() => useProgress()).result.current.assisted]).toEqual(['a'])
+  })
+
   it('ignores corrupt storage', () => {
     localStorage.setItem('vimfluency:progress', '{nope')
     const { result } = renderHook(() => useProgress())

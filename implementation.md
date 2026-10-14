@@ -11,6 +11,7 @@ Det här dokumentet beskriver vad som är byggt och vad som återstår. Arkitekt
 | Övningar | 9 kategorier, 32 övningar. Varje lösning bevisas av `exercises.test.ts` |
 | UI | Sidopanel (övning, instruktion, tangenter i spel, hintar, lista) och terminalfönster med statusrad och kommandorad |
 | Framsteg | `localStorage` via `useProgress`, bock i listan, senast vald övning kommer ihåg |
+| Hintar | Hintruta med en hint i taget, sedan "Show the keys" som sista utväg (markeras som klarad med hjälp) |
 | Pedagogik | Låsta tangenter per övning, `r` som nödutgång, Enter/`r` efter klarad övning, varning vid överskjutning, relativa radnummer |
 
 Kategorier och övningar:
@@ -29,7 +30,6 @@ Kategorier och övningar:
 
 Beslutat men inte byggt:
 
-- **Hintruta:** tydligare, med en hint i taget. Öppen fråga: ska lösningen kunna visas efter sista hinten?
 - **Feedback för ändringsövningar:** meddelande när man är tillbaka i normalt läge och texten är fel (idag finns bara överskjutning för markörövningar).
 
 Idéer:

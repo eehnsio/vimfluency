@@ -16,6 +16,7 @@ Pedagogik (beslutad):
 
 - Användaren ska ges tid att lära sig. Ingen tangenträknare, ingen "par" och ingen speedrun.
 - Övningarna är **låsta**: bara tangenterna som övningen tränar fungerar. Allt annat, inklusive piltangenter, mus och inklistring, är blockerat. `r` är nödutgång (startar om övningen).
+- Hintar visas en i taget i en hintruta. Efter sista hinten kan man som sista utväg visa tangenterna; då räknas övningen som klarad med hjälp (`assisted`, dämpad bock i listan).
 - Målet för övningen står delvis som kommentarer överst i editorn, resten i sidopanelen.
 - Efter klarad övning är editorn låst: `Enter` går vidare, `r` börjar om.
 - Hoppar markören förbi målet visas en tydlig varning.

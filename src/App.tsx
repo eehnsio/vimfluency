@@ -53,11 +53,16 @@ export default function App() {
     <div className="grid h-full grid-cols-[360px_1fr]">
       <aside className="flex min-h-0 flex-col overflow-y-auto border-r border-border bg-surface-raised">
         <h1 className="px-4 pt-4 text-xl font-semibold">vimfluency</h1>
-        <ExerciseDetail exercise={exercise} onReset={reset} />
+        <ExerciseDetail
+          exercise={exercise}
+          onReset={reset}
+          onSolutionShown={() => progress.markAssisted(exercise.id)}
+        />
         <ExerciseList
           categories={categories}
           selectedId={exercise.id}
           completedIds={progress.completed}
+          assistedIds={progress.assisted}
           onSelect={select}
         />
       </aside>

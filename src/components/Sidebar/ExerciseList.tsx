@@ -4,10 +4,12 @@ interface Props {
   categories: Category[]
   selectedId: string
   completedIds: Set<string>
+  /** Klarade där lösningen visades. */
+  assistedIds?: Set<string>
   onSelect: (id: string) => void
 }
 
-export function ExerciseList({ categories, selectedId, completedIds, onSelect }: Props) {
+export function ExerciseList({ categories, selectedId, completedIds, assistedIds, onSelect }: Props) {
   return (
     <nav aria-label="Exercises" className="flex flex-col gap-4 p-4">
       {categories.map((category) => (
@@ -16,6 +18,7 @@ export function ExerciseList({ categories, selectedId, completedIds, onSelect }:
           <ul className="mt-1 flex flex-col">
             {category.exercises.map((exercise) => {
               const done = completedIds.has(exercise.id)
+              const assisted = done && assistedIds?.has(exercise.id)
               const selected = exercise.id === selectedId
               return (
                 <li key={exercise.id}>
@@ -27,7 +30,7 @@ export function ExerciseList({ categories, selectedId, completedIds, onSelect }:
                       selected ? 'bg-border text-fg' : 'text-fg-muted'
                     }`}
                   >
-                    <span aria-hidden className={done ? 'text-success' : 'text-transparent'}>
+                    <span aria-hidden className={assisted ? 'text-fg-muted' : done ? 'text-success' : 'text-transparent'}>
                       ✓
                     </span>
                     <span>
@@ -35,7 +38,7 @@ export function ExerciseList({ categories, selectedId, completedIds, onSelect }:
                       {done && (
                         <>
                           {' '}
-                          <span className="sr-only">(completed)</span>
+                          <span className="sr-only">{assisted ? '(completed with help)' : '(completed)'}</span>
                         </>
                       )}
                     </span>
