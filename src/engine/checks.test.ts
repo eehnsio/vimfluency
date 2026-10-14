@@ -1,4 +1,4 @@
-import { evaluate, type EditorState } from './checks'
+import { evaluate, onlyNeedsNormalMode, type EditorState } from './checks'
 
 const state: EditorState = {
   content: 'hello',
@@ -36,5 +36,25 @@ describe('evaluate', () => {
 
   it('treats an empty list as passed', () => {
     expect(evaluate([], state, 'hello').passed).toBe(true)
+  })
+})
+
+describe('onlyNeedsNormalMode', () => {
+  const checks = [
+    { type: 'contentEquals', expected: 'hello' },
+    { type: 'mode', mode: 'normal' },
+  ] as const
+
+  it('is true when the text is right but you are still in insert mode', () => {
+    expect(onlyNeedsNormalMode([...checks], { ...state, mode: 'insert' }, 'start')).toBe(true)
+  })
+
+  it('is false when the text is wrong', () => {
+    expect(onlyNeedsNormalMode([...checks], { ...state, content: 'nope', mode: 'insert' }, 'start')).toBe(false)
+  })
+
+  it('is false in normal mode and when there is no mode check', () => {
+    expect(onlyNeedsNormalMode([...checks], state, 'start')).toBe(false)
+    expect(onlyNeedsNormalMode([{ type: 'contentEquals', expected: 'hello' }], { ...state, mode: 'insert' }, 'start')).toBe(false)
   })
 })

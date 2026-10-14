@@ -32,6 +32,17 @@ function passes(check: Check, state: EditorState, initialContent: string): boole
   }
 }
 
+/**
+ * Sant om det enda som saknas är att gå tillbaka till normalt läge: alla andra
+ * checkar passerar och en `mode`-check faller. Då är texten redan rätt.
+ */
+export function onlyNeedsNormalMode(checks: Check[], state: EditorState, initialContent: string): boolean {
+  const modeChecks = checks.filter((check) => check.type === 'mode')
+  if (modeChecks.length === 0 || state.mode === 'normal') return false
+  const others = checks.filter((check) => check.type !== 'mode')
+  return evaluate(others, state, initialContent).passed
+}
+
 export function evaluate(checks: Check[], state: EditorState, initialContent: string): CheckResult {
   const failed = checks.filter((check) => !passes(check, state, initialContent))
   return { passed: failed.length === 0, failed }

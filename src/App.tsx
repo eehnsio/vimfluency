@@ -13,7 +13,7 @@ import { useProgress } from './hooks/useProgress'
 export default function App() {
   const progress = useProgress()
   const exercise = (progress.lastId && getExercise(progress.lastId)) || allExercises[0]
-  const { containerRef, state, completed, blockedKey, overshot, reset } = useExerciseSession(exercise)
+  const { containerRef, state, completed, blockedKey, overshot, needsEsc, reset } = useExerciseSession(exercise)
 
   const { markCompleted, select } = progress
   useEffect(() => {
@@ -75,6 +75,7 @@ export default function App() {
               filename={exercise.activeFile}
               blockedKey={blockedKey}
               overshot={overshot && !completed}
+              needsEsc={needsEsc}
             />
           </div>
         </TerminalPane>

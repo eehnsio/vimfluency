@@ -1,6 +1,6 @@
 import { javascript } from '@codemirror/lang-javascript'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { evaluate, type EditorState } from '../engine/checks'
+import { evaluate, onlyNeedsNormalMode, type EditorState } from '../engine/checks'
 import { editorTheme } from '../engine/editorTheme'
 import { deriveAllowedKeys } from '../engine/lock'
 import { cursorTarget, overshotTarget } from '../engine/overshoot'
@@ -74,5 +74,9 @@ export function useExerciseSession(exercise: Exercise) {
     resetRef.current = reset
   }, [reset])
 
-  return { containerRef, state, completed, blockedKey, overshot, reset }
+  const initialContent = exercise.files.find((f) => f.path === exercise.activeFile)!.content
+  // Texten är rätt men man står kvar i insert/visual: be om Esc.
+  const needsEsc = !completed && state !== null && onlyNeedsNormalMode(exercise.checks, state, initialContent)
+
+  return { containerRef, state, completed, blockedKey, overshot, needsEsc, reset }
 }

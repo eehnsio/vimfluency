@@ -19,6 +19,7 @@ Pedagogik (beslutad):
 - Målet för övningen står delvis som kommentarer överst i editorn, resten i sidopanelen.
 - Efter klarad övning är editorn låst: `Enter` går vidare, `r` börjar om.
 - Hoppar markören förbi målet visas en tydlig varning.
+- Är texten rätt men man står kvar i insert/visual visas "Press Esc to go back to normal mode" (övningar med `mode`-check klaras först i normalt läge).
 - Introt ("Start here", första kategorin): ett fejkat skal där man måste skriva `nvim` + Enter (visas en gång, sparas som `openedNvim`), sedan fyra korta övningar om radnummer, position, lägen och `:set`.
 
 ## Teknikstack och varför
