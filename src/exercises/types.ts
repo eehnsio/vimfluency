@@ -15,7 +15,7 @@ export interface VirtualFile {
 
 export type Check =
   /** 1-indexerat, som i vim. */
-  | { type: 'cursorAt'; line: number; col: number }
+  | { type: 'cursorAt'; line: number; col?: number }
   | { type: 'contentEquals'; file?: string; expected: string }
   /** Innehållet i aktiv fil är orört, så en rörelse-övning inte klaras genom att radera. */
   | { type: 'contentUnchanged' }

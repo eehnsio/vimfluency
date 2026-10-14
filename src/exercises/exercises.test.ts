@@ -36,7 +36,7 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
       line >= 1 && line <= lines().length && col >= 1 && col <= Math.max(1, lines()[line - 1].length)
     expect(inside(exercise.start.line, exercise.start.col)).toBe(true)
     for (const check of exercise.checks) {
-      if (check.type === 'cursorAt') expect(inside(check.line, check.col)).toBe(true)
+      if (check.type === 'cursorAt') expect(inside(check.line, check.col ?? 1)).toBe(true)
     }
   })
 

@@ -9,7 +9,7 @@ export default defineExercise(
     hints: ['Count the lines between the cursor and TARGET and put that number in front of `j`.'],
     activeFile: 'src/App.tsx',
     start: { line: 1, col: 1 },
-    checks: [{ type: 'cursorAt', line: 9, col: 1 }, { type: 'contentUnchanged' }],
+    checks: [{ type: 'cursorAt', line: 9 }, { type: 'contentUnchanged' }],
     solution: '8j',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),

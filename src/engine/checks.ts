@@ -15,7 +15,10 @@ export interface CheckResult {
 function passes(check: Check, state: EditorState, initialContent: string): boolean {
   switch (check.type) {
     case 'cursorAt':
-      return state.cursor.line === check.line && state.cursor.col === check.col
+      return (
+        state.cursor.line === check.line &&
+        (check.col === undefined || state.cursor.col === check.col)
+      )
     case 'contentEquals':
       return state.content === check.expected
     case 'contentUnchanged':

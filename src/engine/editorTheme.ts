@@ -20,6 +20,12 @@ const theme = EditorView.theme(
       color: 'var(--color-fg-muted)',
       border: 'none',
     },
+    '.cm-lineNumbers .cm-gutterElement': { padding: '0 0.75rem 0 1rem' },
+    '.cm-activeLine': { backgroundColor: 'var(--color-surface-raised)' },
+    '.cm-activeLineGutter': {
+      backgroundColor: 'var(--color-surface-raised)',
+      color: 'var(--color-accent)',
+    },
     '&.cm-focused': { outline: 'none' },
     '.cm-fat-cursor': {
       backgroundColor: 'var(--color-accent) !important',

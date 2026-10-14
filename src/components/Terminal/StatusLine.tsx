@@ -4,11 +4,17 @@ interface Props {
   state: EditorState | null
 }
 
+const MODE_COLOR = {
+  normal: 'bg-accent',
+  insert: 'bg-success',
+  visual: 'bg-fg',
+} as const
+
 export function StatusLine({ state }: Props) {
   const mode = state?.mode ?? 'normal'
   return (
     <div className="flex items-center gap-4 border-t border-border bg-surface-raised px-3 py-1 font-mono text-xs">
-      <span className="rounded bg-accent px-2 font-semibold text-term-bg uppercase">{mode}</span>
+      <span className={`rounded px-2 font-semibold text-term-bg uppercase ${MODE_COLOR[mode]}`}>{mode}</span>
       <span className="text-fg-muted">
         {state ? `${state.cursor.line}:${state.cursor.col}` : '–'}
       </span>

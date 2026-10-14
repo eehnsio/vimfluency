@@ -97,3 +97,23 @@ describe('session subscribe', () => {
     expect(listener).not.toHaveBeenCalled()
   })
 })
+
+describe('session line numbers', () => {
+  it('shows relative distances with the absolute number on the current line', async () => {
+    const { relativeLineNumbers } = await import('./lineNumbers')
+    const s = createSession({
+      parent: document.body,
+      content: 'a\nb\nc\nd',
+      start: { line: 2, col: 1 },
+      extensions: [relativeLineNumbers],
+    })
+    session = s
+    const numbers = () =>
+      [...s.view.dom.querySelectorAll('.cm-lineNumbers .cm-gutterElement')]
+        .map((el) => el.textContent)
+        .slice(-4)
+    expect(numbers()).toEqual(['1', '2', '1', '2'])
+    s.sendKeys('j')
+    expect(numbers()).toEqual(['2', '1', '3', '1'])
+  })
+})
