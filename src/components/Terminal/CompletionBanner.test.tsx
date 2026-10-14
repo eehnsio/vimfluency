@@ -8,14 +8,14 @@ describe('CompletionBanner', () => {
     const onReset = vi.fn()
     render(<CompletionBanner onNext={onNext} onReset={onReset} />)
     expect(screen.getByRole('status')).toHaveTextContent('Exercise complete')
-    await userEvent.click(screen.getByRole('button', { name: 'Next' }))
-    await userEvent.click(screen.getByRole('button', { name: 'Try again' }))
+    await userEvent.click(screen.getByRole('button', { name: /^Next/ }))
+    await userEvent.click(screen.getByRole('button', { name: /^Try again/ }))
     expect(onNext).toHaveBeenCalled()
     expect(onReset).toHaveBeenCalled()
   })
 
   it('hides Next when there is no next exercise', () => {
     render(<CompletionBanner onReset={() => {}} />)
-    expect(screen.queryByRole('button', { name: 'Next' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: /^Next/ })).not.toBeInTheDocument()
   })
 })

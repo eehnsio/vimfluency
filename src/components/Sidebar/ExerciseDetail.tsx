@@ -25,7 +25,7 @@ function Inline({ text }: { text: string }) {
 
 export function ExerciseDetail({ exercise, onReset }: Props) {
   return (
-    <article className="flex flex-col gap-3 border-t border-border p-4">
+    <article className="flex flex-col gap-3 border-b border-border p-4">
       <h2 className="text-lg font-semibold">{exercise.title}</h2>
       <p className="text-sm leading-relaxed text-fg-muted">
         <Inline text={exercise.instructions} />
@@ -40,7 +40,7 @@ export function ExerciseDetail({ exercise, onReset }: Props) {
         All other keys and the mouse are locked.
       </p>
       {exercise.hints && exercise.hints.length > 0 && (
-        <details className="text-sm text-fg-muted">
+        <details open className="text-sm text-fg-muted">
           <summary className="cursor-pointer text-accent">Hints</summary>
           <ul className="mt-2 list-disc pl-5">
             {exercise.hints.map((hint) => (

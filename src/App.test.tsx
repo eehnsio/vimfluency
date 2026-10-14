@@ -50,6 +50,25 @@ describe('App completion flow', () => {
     expect(screen.getByRole('button', { name: new RegExp(exercise.title) })).toHaveTextContent('(completed)')
     expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toContain(exercise.id)
   })
+
+  it('goes to the next exercise with Enter and locks other keys when done', async () => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    const user = userEvent.setup()
+    render(<App />)
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    await user.keyboard(exercise.solution)
+    await screen.findByRole('status')
+
+    const before = document.querySelector('.cm-content')!.textContent
+    await user.keyboard('x')
+    expect(document.querySelector('.cm-content')!.textContent).toBe(before)
+
+    await user.keyboard('{Enter}')
+    const next = allExercises[allExercises.indexOf(exercise) + 1]
+    expect(screen.getByRole('heading', { level: 2, name: next.title })).toBeInTheDocument()
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
 })
 
 describe('App locking', () => {
