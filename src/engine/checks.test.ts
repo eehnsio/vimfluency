@@ -1,6 +1,6 @@
-import { evaluate, onlyNeedsNormalMode, type EditorState } from './checks'
+import { evaluate, onlyNeedsNormalMode, type SessionState } from './checks'
 
-const state: EditorState = {
+const state: SessionState = {
   content: 'hello',
   cursor: { line: 1, col: 3 },
   mode: 'normal',

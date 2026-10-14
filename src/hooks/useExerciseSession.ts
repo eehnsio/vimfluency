@@ -1,6 +1,6 @@
 import { javascript } from '@codemirror/lang-javascript'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { evaluate, onlyNeedsNormalMode, type EditorState } from '../engine/checks'
+import { evaluate, onlyNeedsNormalMode, type SessionState } from '../engine/checks'
 import { editorTheme } from '../engine/editorTheme'
 import { deriveAllowedKeys } from '../engine/lock'
 import { cursorTarget, overshotTarget } from '../engine/overshoot'
@@ -11,7 +11,7 @@ import type { Exercise } from '../exercises/types'
 export function useExerciseSession(exercise: Exercise) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sessionRef = useRef<Session | null>(null)
-  const [state, setState] = useState<EditorState | null>(null)
+  const [state, setState] = useState<SessionState | null>(null)
   const [completed, setCompleted] = useState(false)
   const [blockedKey, setBlockedKey] = useState<string | null>(null)
   const [overshot, setOvershot] = useState(false)

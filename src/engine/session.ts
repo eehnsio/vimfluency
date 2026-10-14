@@ -1,7 +1,7 @@
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
-import type { EditorState as SessionState } from './checks'
+import type { SessionState } from './checks'
 import { parseKeys } from './keys'
 import { keyFromEvent } from './lock'
 import { lineNumberExtension } from './lineNumbers'
