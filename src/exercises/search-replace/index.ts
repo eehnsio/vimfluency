@@ -1,9 +1,11 @@
 import type { Category } from '../types'
 import renameVariable from './rename-variable/exercise'
+import replaceCurrentLine from './replace-current-line/exercise'
+import searchNext from './search-next/exercise'
 
 export const searchReplace: Category = {
   id: 'search-replace',
   title: 'Search and replace',
   description: 'Find text in a file and change it in bulk.',
-  exercises: [renameVariable],
+  exercises: [searchNext, replaceCurrentLine, renameVariable],
 }
