@@ -5,6 +5,8 @@ const STORAGE_KEY = 'vimfluency:progress'
 interface Stored {
   completed: string[]
   lastId?: string
+  /** Användaren har skrivit `nvim` i introt och behöver inte göra det igen. */
+  openedNvim?: boolean
 }
 
 function load(): Stored {
@@ -15,6 +17,7 @@ function load(): Stored {
       return {
         completed: Array.isArray(parsed.completed) ? parsed.completed.filter((id) => typeof id === 'string') : [],
         lastId: typeof parsed.lastId === 'string' ? parsed.lastId : undefined,
+        openedNvim: parsed.openedNvim === true,
       }
     }
   } catch {
@@ -52,5 +55,14 @@ export function useProgress() {
 
   const select = useCallback((id: string) => update((current) => ({ ...current, lastId: id })), [update])
 
-  return { completed: new Set(stored.completed), lastId: stored.lastId, markCompleted, select }
+  const openNvim = useCallback(() => update((current) => ({ ...current, openedNvim: true })), [update])
+
+  return {
+    completed: new Set(stored.completed),
+    lastId: stored.lastId,
+    openedNvim: stored.openedNvim === true,
+    markCompleted,
+    select,
+    openNvim,
+  }
 }

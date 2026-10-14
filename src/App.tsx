@@ -1,4 +1,5 @@
 import { useEffect } from 'react'
+import { ShellIntro } from './components/Terminal/ShellIntro'
 import { ExerciseDetail } from './components/Sidebar/ExerciseDetail'
 import { ExerciseList } from './components/Sidebar/ExerciseList'
 import { CompletionBanner } from './components/Terminal/CompletionBanner'
@@ -21,6 +22,15 @@ export default function App() {
 
   const next = nextExercise(exercise.id)
   const nextId = next?.id
+
+  // Första övningen börjar i ett skal där man måste skriva `nvim`.
+  const showShell = exercise.id === allExercises[0].id && !progress.openedNvim
+  const { openNvim } = progress
+
+  useEffect(() => {
+    if (showShell) return
+    containerRef.current?.querySelector<HTMLElement>('.cm-content')?.focus()
+  }, [showShell, containerRef])
 
   // När övningen är klar tar bannern över tangenterna: Enter går vidare, r
   // börjar om och allt annat är låst.
@@ -52,12 +62,21 @@ export default function App() {
         />
       </aside>
       <main className="min-w-0">
-        <TerminalPane filename={exercise.activeFile}>
-          <VimEditor containerRef={containerRef} />
-          {completed && (
-            <CompletionBanner onReset={reset} onNext={nextId ? () => select(nextId) : undefined} />
-          )}
-          <StatusLine state={state} filename={exercise.activeFile} blockedKey={blockedKey} overshot={overshot && !completed} />
+        <TerminalPane filename={showShell ? undefined : exercise.activeFile}>
+          {showShell && <ShellIntro onOpenEditor={openNvim} />}
+          {/* Editorn är monterad hela tiden så att sessionen finns när skalet stängs. */}
+          <div className={showShell ? 'hidden' : 'flex min-h-0 flex-1 flex-col'}>
+            <VimEditor containerRef={containerRef} />
+            {completed && (
+              <CompletionBanner onReset={reset} onNext={nextId ? () => select(nextId) : undefined} />
+            )}
+            <StatusLine
+              state={state}
+              filename={exercise.activeFile}
+              blockedKey={blockedKey}
+              overshot={overshot && !completed}
+            />
+          </div>
         </TerminalPane>
       </main>
     </div>

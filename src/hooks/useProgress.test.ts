@@ -24,6 +24,14 @@ describe('useProgress', () => {
     expect(second.result.current.lastId).toBe('b')
   })
 
+  it('remembers that nvim was opened in the intro', () => {
+    const first = renderHook(() => useProgress())
+    expect(first.result.current.openedNvim).toBe(false)
+    act(() => first.result.current.openNvim())
+    expect(first.result.current.openedNvim).toBe(true)
+    expect(renderHook(() => useProgress()).result.current.openedNvim).toBe(true)
+  })
+
   it('ignores corrupt storage', () => {
     localStorage.setItem('vimfluency:progress', '{nope')
     const { result } = renderHook(() => useProgress())

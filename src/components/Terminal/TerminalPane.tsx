@@ -1,7 +1,8 @@
 import { useState, type ReactNode } from 'react'
 
 interface Props {
-  filename: string
+  /** Filen som är öppen i nvim. Utelämnas när terminalen bara visar skalet. */
+  filename?: string
   children: ReactNode
 }
 
@@ -37,7 +38,9 @@ export function TerminalPane({ filename, children }: Props) {
             />
           </span>
           <span className="ml-3 font-mono text-xs text-fg-muted">~/vimfluency</span>
-          <span className="ml-auto font-mono text-xs text-fg-muted">nvim {filename}</span>
+          <span className="ml-auto font-mono text-xs text-fg-muted">
+            {filename ? `nvim ${filename}` : 'zsh'}
+          </span>
         </header>
         {children}
       </div>

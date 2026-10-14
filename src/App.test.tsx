@@ -115,3 +115,30 @@ describe('App locking', () => {
     expect(screen.getByText(/Keys in play/)).toBeInTheDocument()
   })
 })
+
+describe('App intro shell', () => {
+  it('starts in a shell on the first exercise and opens the editor with nvim', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    expect(screen.getByText(/Don't be scared/)).toBeInTheDocument()
+    expect(screen.getByTestId('prompt')).toBeInTheDocument()
+
+    await user.keyboard('nvim{Enter}')
+    expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
+    expect(screen.getByText('nvim src/App.tsx')).toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).openedNvim).toBe(true)
+  })
+
+  it('does not show the shell again once nvim has been opened', () => {
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], openedNvim: true }))
+    render(<App />)
+    expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
+  })
+
+  it('does not show the shell on other exercises', () => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    render(<App />)
+    expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
+  })
+})
