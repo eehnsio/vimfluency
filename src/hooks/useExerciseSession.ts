@@ -1,6 +1,5 @@
 import { javascript } from '@codemirror/lang-javascript'
 import { useCallback, useEffect, useRef, useState } from 'react'
-import { relativeLineNumbers } from '../engine/lineNumbers'
 import { evaluate, type EditorState } from '../engine/checks'
 import { editorTheme } from '../engine/editorTheme'
 import { deriveAllowedKeys } from '../engine/lock'
@@ -26,7 +25,8 @@ export function useExerciseSession(exercise: Exercise) {
       parent,
       content: file.content,
       start: exercise.start,
-      extensions: [javascript({ jsx: true, typescript: true }), relativeLineNumbers, editorTheme],
+      extensions: [javascript({ jsx: true, typescript: true }), editorTheme],
+      lineNumbers: true,
       allowedKeys: deriveAllowedKeys(exercise.solution, exercise.allowedKeys),
       // `r` är låst som alla andra tangenter som inte hör till övningen, men
       // används som nödutgång så att man aldrig fastnar efter att ha missat målet.

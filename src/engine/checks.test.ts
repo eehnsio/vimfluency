@@ -4,6 +4,7 @@ const state: EditorState = {
   content: 'hello',
   cursor: { line: 1, col: 3 },
   mode: 'normal',
+  options: { number: true, relativenumber: true },
 }
 
 describe('evaluate', () => {
@@ -26,6 +27,11 @@ describe('evaluate', () => {
     const result = evaluate([wrongCursor, { type: 'mode', mode: 'normal' }], state, 'hello')
     expect(result.passed).toBe(false)
     expect(result.failed).toEqual([wrongCursor])
+  })
+
+  it('checks vim options', () => {
+    expect(evaluate([{ type: 'option', name: 'number', value: true }], state, 'hello').passed).toBe(true)
+    expect(evaluate([{ type: 'option', name: 'number', value: false }], state, 'hello').passed).toBe(false)
   })
 
   it('treats an empty list as passed', () => {

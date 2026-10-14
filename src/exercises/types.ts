@@ -20,6 +20,8 @@ export type Check =
   /** Innehållet i aktiv fil är orört, så en rörelse-övning inte klaras genom att radera. */
   | { type: 'contentUnchanged' }
   | { type: 'mode'; mode: Mode }
+  /** Ett vim-alternativ (`:set number`) har ett visst värde. */
+  | { type: 'option'; name: 'number' | 'relativenumber'; value: boolean }
 
 export interface Exercise {
   id: string

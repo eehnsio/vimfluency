@@ -5,6 +5,8 @@ export interface EditorState {
   /** 1-indexerat, som i vim. */
   cursor: { line: number; col: number }
   mode: Mode
+  /** Alternativ som `:set` ändrar. */
+  options: { number: boolean; relativenumber: boolean }
 }
 
 export interface CheckResult {
@@ -25,6 +27,8 @@ function passes(check: Check, state: EditorState, initialContent: string): boole
       return state.content === initialContent
     case 'mode':
       return state.mode === check.mode
+    case 'option':
+      return state.options[check.name] === check.value
   }
 }
 

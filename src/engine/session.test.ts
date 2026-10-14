@@ -76,7 +76,7 @@ describe('session', () => {
     const s = open('abc def', 1, 2)
     s.sendKeys('dwi!')
     s.reset()
-    expect(s.getState()).toEqual({
+    expect(s.getState()).toMatchObject({
       content: 'abc def',
       cursor: { line: 1, col: 2 },
       mode: 'normal',
@@ -100,12 +100,11 @@ describe('session subscribe', () => {
 
 describe('session line numbers', () => {
   it('shows relative distances with the absolute number on the current line', async () => {
-    const { relativeLineNumbers } = await import('./lineNumbers')
     const s = createSession({
       parent: document.body,
       content: 'a\nb\nc\nd',
       start: { line: 2, col: 1 },
-      extensions: [relativeLineNumbers],
+      lineNumbers: true,
     })
     session = s
     const numbers = () =>
@@ -115,6 +114,42 @@ describe('session line numbers', () => {
     expect(numbers()).toEqual(['1', '2', '1', '2'])
     s.sendKeys('j')
     expect(numbers()).toEqual(['2', '1', '3', '1'])
+  })
+
+  it('turns line numbers off and on with :set', () => {
+    const s = createSession({
+      parent: document.body,
+      content: 'a\nb',
+      start: { line: 1, col: 1 },
+      lineNumbers: true,
+    })
+    session = s
+    const gutter = () => s.view.dom.querySelector('.cm-lineNumbers')
+    expect(gutter()).not.toBeNull()
+    expect(s.getState().options).toEqual({ number: true, relativenumber: true })
+
+    s.sendKeys(':set nonumber<CR>')
+    expect(gutter()).toBeNull()
+    expect(s.getState().options.number).toBe(false)
+
+    s.sendKeys(':set number<CR>')
+    expect(gutter()).not.toBeNull()
+    expect(s.getState().options.number).toBe(true)
+  })
+
+  it('switches between relative and absolute numbers with :set norelativenumber', () => {
+    const s = createSession({
+      parent: document.body,
+      content: 'a\nb\nc',
+      start: { line: 1, col: 1 },
+      lineNumbers: true,
+    })
+    session = s
+    s.sendKeys(':set norelativenumber<CR>')
+    const numbers = [...s.view.dom.querySelectorAll('.cm-lineNumbers .cm-gutterElement')]
+      .map((el) => el.textContent)
+      .slice(-3)
+    expect(numbers).toEqual(['1', '2', '3'])
   })
 })
 

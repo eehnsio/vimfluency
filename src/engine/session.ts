@@ -1,9 +1,10 @@
-import { EditorState } from '@codemirror/state'
+import { Compartment, EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
 import type { EditorState as SessionState } from './checks'
 import { parseKeys } from './keys'
 import { keyFromEvent } from './lock'
+import { lineNumberExtension, type NumberOptions } from './lineNumbers'
 import type { Mode } from '../exercises/types'
 
 export interface SessionOptions {
@@ -12,6 +13,8 @@ export interface SessionOptions {
   /** 1-indexerat, som i vim. */
   start: { line: number; col: number }
   extensions?: import('@codemirror/state').Extension[]
+  /** Visa radnummer och aktiv rad. Styrs av `:set number` och `:set relativenumber`. */
+  lineNumbers?: boolean
   /**
    * Om satt är bara dessa tangenter (notation som i `parseKeys`) tillåtna från
    * användaren, och mus, klistra in och drag låses. `sendKeys` påverkas inte.
@@ -31,6 +34,20 @@ export interface Session {
   destroy(): void
 }
 
+type OptionName = keyof NumberOptions
+
+// Vims alternativ är globala men värdet kommer med en editor (`cm`). Sessionen
+// registrerar sig här så att `:set nonumber` hamnar hos rätt editor.
+const optionHandlers = new WeakMap<object, (name: OptionName, value: boolean) => void>()
+
+function defineToggle(name: OptionName, aliases: string[]) {
+  Vim.defineOption(name, true, 'boolean', aliases, (value: unknown, cm?: object) => {
+    if (cm && typeof value === 'boolean') optionHandlers.get(cm)?.(name, value)
+  })
+}
+defineToggle('number', ['nu'])
+defineToggle('relativenumber', ['rnu'])
+
 /** Låser musen och andra inmatningssätt än tangentbordet i övningsläge. */
 const lockedInput = EditorView.domEventHandlers({
   mousedown(event, view) {
@@ -48,6 +65,8 @@ const lockedInput = EditorView.domEventHandlers({
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
+  const numberOptions: NumberOptions = { number: true, relativenumber: true }
+  const numbers = new Compartment()
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
 
@@ -58,12 +77,20 @@ export function createSession(options: SessionOptions): Session {
         vim(),
         EditorView.updateListener.of(notify),
         ...(options.allowedKeys ? [lockedInput] : []),
+        numbers.of(options.lineNumbers ? lineNumberExtension(numberOptions) : []),
         ...extensions,
       ],
     }),
     parent: options.parent ?? document.createElement('div'),
   })
   const cm = getCM(view)!
+  optionHandlers.set(cm, (name, value) => {
+    numberOptions[name] = value
+    if (options.lineNumbers) {
+      view.dispatch({ effects: numbers.reconfigure(lineNumberExtension(numberOptions)) })
+    }
+    notify()
+  })
   const { allowedKeys, onBlocked } = options
   const onLockedKeyDown = (event: KeyboardEvent) => {
     if (!allowedKeys) return
@@ -138,6 +165,7 @@ export function createSession(options: SessionOptions): Session {
       content: view.state.doc.toString(),
       cursor: { line: head.line + 1, col: head.ch + 1 },
       mode: getMode(),
+      options: { ...numberOptions },
     }
   }
 

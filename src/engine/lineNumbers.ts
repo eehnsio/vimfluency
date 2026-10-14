@@ -21,22 +21,33 @@ class NumberMarker extends GutterMarker {
   }
 }
 
-/**
- * Hybrid-radnummer som i `set number relativenumber`: aktuell rad visar sitt
- * riktiga nummer och övriga visar avståndet till markören. Avståndet är det
- * man skriver framför `j`/`k` (`8j`).
- */
-export const relativeLineNumbers: Extension = [
+/** Radnummer enligt vims `number` och `relativenumber`. */
+export interface NumberOptions {
+  number: boolean
+  relativenumber: boolean
+}
+
+const relative: Extension = [
   lineNumbers(),
+  // Avståndet är det man skriver framför `j`/`k` (`8j`). Aktuell rad visar sitt
+  // riktiga nummer, som i `set number relativenumber`.
   lineNumberMarkers.compute(['doc', 'selection'], (state) => {
     const current = state.doc.lineAt(state.selection.main.head).number
     const builder = new RangeSetBuilder<GutterMarker>()
     for (let n = 1; n <= state.doc.lines; n++) {
       const text = n === current ? String(n) : String(Math.abs(n - current))
-      builder.add(state.doc.line(n).from, state.doc.line(n).from, new NumberMarker(text))
+      const from = state.doc.line(n).from
+      builder.add(from, from, new NumberMarker(text))
     }
     return builder.finish()
   }),
-  highlightActiveLine(),
-  highlightActiveLineGutter(),
 ]
+
+/** Aktiv rad (cursorline) är alltid på. Själva numren följer alternativen. */
+export function lineNumberExtension({ number, relativenumber }: NumberOptions): Extension {
+  const gutter = !number ? [] : relativenumber ? relative : lineNumbers()
+  return [gutter, highlightActiveLine(), highlightActiveLineGutter()]
+}
+
+/** Hybridnummer, standardläget i övningarna. */
+export const relativeLineNumbers = lineNumberExtension({ number: true, relativenumber: true })
