@@ -1,8 +1,8 @@
 import type { ReactNode } from 'react'
-import type { EditorState } from '../../engine/checks'
+import type { SessionState } from '../../engine/checks'
 
 interface Props {
-  state: EditorState | null
+  state: SessionState | null
   filename: string
   blockedKey?: string | null
   /** Texten är rätt, men man måste gå tillbaka till normalt läge. */
@@ -28,7 +28,7 @@ function filetype(filename: string) {
   return FILETYPES[filename.split('.').pop() ?? ''] ?? 'text'
 }
 
-function scrollPercent(state: EditorState) {
+function scrollPercent(state: SessionState) {
   const lines = state.content.split('\n').length
   if (state.cursor.line <= 1) return 'Top'
   if (state.cursor.line >= lines) return 'Bot'

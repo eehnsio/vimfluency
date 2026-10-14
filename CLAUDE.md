@@ -60,11 +60,11 @@ src/
     session.ts              # createSession: EditorView + vim, sendKeys, getState, reset, subscribe, lås
     checks.ts               # evaluate(checks, state, initialContent)
     lock.ts                 # whitelist av tangenter härledd från lösningen
-    overshoot.ts            # upptäcker att markören hoppat förbi målet
+    overshoot.ts            # upptäcker att markören hoppat förbi målet (createOvershootTracker)
     lineNumbers.ts          # radnummer enligt :set number/relativenumber + aktiv rad
     editorTheme.ts          # CodeMirror-tema på samma tokens
   hooks/                    # useExerciseSession, useProgress
-  components/               # Sidebar/…, Terminal/… (ShellIntro = fejkat skal i introt)
+  components/               # Sidebar/…, Terminal/… (ShellIntro = fejkat skal i introt), ErrorBoundary (fallback istället för vit sida)
   test/setup.ts             # jsdom-polyfills för layout (radbaserade)
 ```
 

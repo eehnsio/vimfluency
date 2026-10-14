@@ -1,7 +1,7 @@
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
-import type { EditorState as SessionState } from './checks'
+import type { SessionState } from './checks'
 import { parseKeys } from './keys'
 import { keyFromEvent } from './lock'
 import { lineNumberExtension } from './lineNumbers'
@@ -51,6 +51,12 @@ defineToggle('relativenumber', ['rnu'])
 /** Inmatningssätt som aldrig är tangenttryck. IME-komposition och tryck-och-håll hamnar här. */
 const BLOCKED_USER_EVENTS = ['input.paste', 'input.drop', 'input.type.compose', 'delete.cut', 'delete.dragged']
 
+/** Stoppar webbläsarens standardåtgärd och markerar händelsen som hanterad för CodeMirror. */
+const block = (event: Event) => {
+  event.preventDefault()
+  return true
+}
+
 /**
  * Låser musen och andra inmatningssätt än tangentbordet i övningsläge. DOM-
  * händelserna stoppas först, och transaktionsfiltret fångar det som ändå tar sig
@@ -63,16 +69,26 @@ const lockedInput: Extension = [
       view.focus()
       return true
     },
-    dblclick: (event) => (event.preventDefault(), true),
-    dragstart: (event) => (event.preventDefault(), true),
-    drop: (event) => (event.preventDefault(), true),
-    paste: (event) => (event.preventDefault(), true),
-    cut: (event) => (event.preventDefault(), true),
+    dblclick: block,
+    dragstart: block,
+    drop: block,
+    paste: block,
+    cut: block,
   }),
   EditorState.transactionFilter.of((transaction) =>
     BLOCKED_USER_EVENTS.some((event) => transaction.isUserEvent(event)) ? [] : transaction,
   ),
 ]
+
+/** Vim-pluginets editorobjekt. Kastar ett tydligt fel om pluginet inte kopplades på. */
+function requireVim(view: EditorView) {
+  const cm = getCM(view)
+  if (!cm) {
+    view.destroy()
+    throw new Error('The vim extension did not attach to the editor')
+  }
+  return cm
+}
 
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
@@ -96,7 +112,7 @@ export function createSession(options: SessionOptions): Session {
     }),
     parent: options.parent ?? document.createElement('div'),
   })
-  const cm = getCM(view)!
+  const cm = requireVim(view)
   const applyNumberOptions = () => {
     if (options.lineNumbers) {
       view.dispatch({ effects: numbers.reconfigure(lineNumberExtension(numberOptions)) })
