@@ -1,10 +1,7 @@
 import { evaluate } from '../engine/checks'
 import { createSession } from '../engine/session'
+import { activeContent } from './define'
 import { allExercises, categories, getExercise, nextExercise } from './registry'
-import type { Exercise } from './types'
-
-const activeContent = (exercise: Exercise) =>
-  exercise.files.find((file) => file.path === exercise.activeFile)!.content
 
 describe('registry', () => {
   it('has unique exercise ids', () => {

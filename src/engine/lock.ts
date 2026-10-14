@@ -36,12 +36,15 @@ export function displayKeys(solution: string, extra = ''): string[] {
   return [...new Set([...parseKeys(solution), ...parseKeys(extra)])].filter((key) => key !== ' ')
 }
 
+/** Sant för tangenter som bara är modifierare och inte skriver eller gör något själva. */
+export const isModifierKey = (event: KeyboardEvent) => MODIFIER_KEYS.has(event.key)
+
 /**
  * Översätter ett tangentbordsevent till samma notation som `parseKeys`, eller
  * `null` om eventet inte är en editortangent (modifierare, webbläsargenvägar).
  */
 export function keyFromEvent(event: KeyboardEvent): string | null {
-  if (event.metaKey || MODIFIER_KEYS.has(event.key)) return null
+  if (event.metaKey || isModifierKey(event)) return null
   if (event.key in NAMED_KEYS) return NAMED_KEYS[event.key]
   if (event.ctrlKey && event.key.length === 1) return `<C-${event.key.toLowerCase()}>`
   return event.key

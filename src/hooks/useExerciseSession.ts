@@ -5,32 +5,45 @@ import { editorTheme } from '../engine/editorTheme'
 import { deriveAllowedKeys } from '../engine/lock'
 import { cursorTarget, overshotTarget } from '../engine/overshoot'
 import { createSession, type Session } from '../engine/session'
+import { activeContent } from '../exercises/define'
 import type { Exercise } from '../exercises/types'
 
 export function useExerciseSession(exercise: Exercise) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sessionRef = useRef<Session | null>(null)
-  const resetRef = useRef<() => void>(() => {})
   const [state, setState] = useState<EditorState | null>(null)
   const [completed, setCompleted] = useState(false)
   const [blockedKey, setBlockedKey] = useState<string | null>(null)
   const [overshot, setOvershot] = useState(false)
 
+  const initialContent = activeContent(exercise)
+
+  const clearFeedback = useCallback(() => {
+    setCompleted(false)
+    setBlockedKey(null)
+    setOvershot(false)
+  }, [])
+
+  const reset = useCallback(() => {
+    sessionRef.current?.reset()
+    clearFeedback()
+    sessionRef.current?.view.focus()
+  }, [clearFeedback])
+
   useEffect(() => {
     const parent = containerRef.current
     if (!parent) return
-    const file = exercise.files.find((f) => f.path === exercise.activeFile)!
 
     const session = createSession({
       parent,
-      content: file.content,
+      content: initialContent,
       start: exercise.start,
       extensions: [javascript({ jsx: true, typescript: true }), editorTheme],
       lineNumbers: true,
       allowedKeys: deriveAllowedKeys(exercise.solution, exercise.allowedKeys),
       // `r` är låst som alla andra tangenter som inte hör till övningen, men
       // används som nödutgång så att man aldrig fastnar efter att ha missat målet.
-      onBlocked: (key) => (key === 'r' ? resetRef.current() : setBlockedKey(key)),
+      onBlocked: (key) => (key === 'r' ? reset() : setBlockedKey(key)),
     })
     sessionRef.current = session
 
@@ -46,13 +59,11 @@ export function useExerciseSession(exercise: Exercise) {
         if (moved && overshotTarget(previous, next.cursor, target)) setOvershot(true)
         previous = next.cursor
       }
-      if (evaluate(exercise.checks, next, file.content).passed) setCompleted(true)
+      if (evaluate(exercise.checks, next, initialContent).passed) setCompleted(true)
     }
     const unsubscribe = session.subscribe(sync)
     setState(session.getState())
-    setCompleted(false)
-    setBlockedKey(null)
-    setOvershot(false)
+    clearFeedback()
     session.view.focus()
 
     return () => {
@@ -60,21 +71,8 @@ export function useExerciseSession(exercise: Exercise) {
       session.destroy()
       sessionRef.current = null
     }
-  }, [exercise])
+  }, [exercise, initialContent, reset, clearFeedback])
 
-  const reset = useCallback(() => {
-    sessionRef.current?.reset()
-    setCompleted(false)
-    setBlockedKey(null)
-    setOvershot(false)
-    sessionRef.current?.view.focus()
-  }, [])
-
-  useEffect(() => {
-    resetRef.current = reset
-  }, [reset])
-
-  const initialContent = exercise.files.find((f) => f.path === exercise.activeFile)!.content
   // Texten är rätt men man står kvar i insert/visual: be om Esc.
   const needsEsc = !completed && state !== null && onlyNeedsNormalMode(exercise.checks, state, initialContent)
 

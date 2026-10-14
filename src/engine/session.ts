@@ -1,4 +1,4 @@
-import { Compartment, EditorState } from '@codemirror/state'
+import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
 import type { EditorState as SessionState } from './checks'
@@ -12,7 +12,7 @@ export interface SessionOptions {
   content: string
   /** 1-indexerat, som i vim. */
   start: { line: number; col: number }
-  extensions?: import('@codemirror/state').Extension[]
+  extensions?: Extension[]
   /** Visa radnummer och aktiv rad. Styrs av `:set number` och `:set relativenumber`. */
   lineNumbers?: boolean
   /**
@@ -95,6 +95,15 @@ export function createSession(options: SessionOptions): Session {
     applyNumberOptions()
     notify()
   })
+  const getMode = (): Mode => {
+    const state = cm.state.vim
+    if (state?.insertMode) return 'insert'
+    if (state?.visualMode) return 'visual'
+    return 'normal'
+  }
+
+  const promptInput = () => view.dom.querySelector('input')
+
   const { allowedKeys, onBlocked } = options
   const onLockedKeyDown = (event: KeyboardEvent) => {
     if (!allowedKeys) return
@@ -113,15 +122,6 @@ export function createSession(options: SessionOptions): Session {
 
   const placeCursor = () => cm.setCursor(start.line - 1, start.col - 1)
   placeCursor()
-
-  const getMode = (): Mode => {
-    const state = cm.state.vim
-    if (state?.insertMode) return 'insert'
-    if (state?.visualMode) return 'visual'
-    return 'normal'
-  }
-
-  const promptInput = () => view.dom.querySelector('input')
 
   const insertText = (text: string) => view.dispatch(view.state.replaceSelection(text))
 
