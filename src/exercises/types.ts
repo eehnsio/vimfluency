@@ -32,4 +32,6 @@ export interface Exercise {
   checks: Check[]
   /** Referenslösning i vim-notation. */
   solution: string
+  /** Extra tangenter (vim-notation) utöver lösningens, t.ex. `u`. Allt annat är låst. */
+  allowedKeys?: string
 }

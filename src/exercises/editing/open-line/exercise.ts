@@ -20,6 +20,7 @@ export default defineExercise(
     start: { line: 5, col: 1 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: 'oimport { useMemo } from \'react\'<Esc>',
+    allowedKeys: 'u',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

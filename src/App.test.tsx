@@ -51,3 +51,16 @@ describe('App completion flow', () => {
     expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toContain(exercise.id)
   })
 })
+
+describe('App locking', () => {
+  it('blocks keys that are not part of the exercise and says so', async () => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    const user = userEvent.setup()
+    render(<App />)
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    await user.keyboard('b')
+    expect(await screen.findByRole('alert')).toHaveTextContent('b is locked in this exercise')
+    expect(screen.getByText(/Keys in play/)).toBeInTheDocument()
+  })
+})

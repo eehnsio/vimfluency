@@ -15,6 +15,7 @@ export default defineExercise(
     start: { line: 4, col: 18 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: 'ci{handleClick<Esc>',
+    allowedKeys: 'u',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

@@ -20,6 +20,7 @@ export default defineExercise(
     start: { line: 4, col: 21 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: 'ci(props<Esc>',
+    allowedKeys: 'u',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

@@ -18,6 +18,7 @@ export default defineExercise(
     start: { line: 4, col: 19 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: 'cwWorld<Esc>',
+    allowedKeys: 'u',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

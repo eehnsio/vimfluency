@@ -18,6 +18,7 @@ export default defineExercise(
     start: { line: 4, col: 4 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: 'iBig <Esc>',
+    allowedKeys: 'u',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

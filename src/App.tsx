@@ -12,7 +12,7 @@ import { useProgress } from './hooks/useProgress'
 export default function App() {
   const progress = useProgress()
   const exercise = (progress.lastId && getExercise(progress.lastId)) || allExercises[0]
-  const { containerRef, state, completed, reset } = useExerciseSession(exercise)
+  const { containerRef, state, completed, blockedKey, reset } = useExerciseSession(exercise)
 
   const { markCompleted } = progress
   useEffect(() => {
@@ -42,7 +42,7 @@ export default function App() {
               onNext={next ? () => progress.select(next.id) : undefined}
             />
           )}
-          <StatusLine state={state} />
+          <StatusLine state={state} blockedKey={blockedKey} />
         </TerminalPane>
       </main>
     </div>

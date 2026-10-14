@@ -3,6 +3,7 @@ import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
 import type { EditorState as SessionState } from './checks'
 import { parseKeys } from './keys'
+import { keyFromEvent } from './lock'
 import type { Mode } from '../exercises/types'
 
 export interface SessionOptions {
@@ -11,6 +12,13 @@ export interface SessionOptions {
   /** 1-indexerat, som i vim. */
   start: { line: number; col: number }
   extensions?: import('@codemirror/state').Extension[]
+  /**
+   * Om satt är bara dessa tangenter (notation som i `parseKeys`) tillåtna från
+   * användaren, och mus, klistra in och drag låses. `sendKeys` påverkas inte.
+   */
+  allowedKeys?: ReadonlySet<string>
+  /** Anropas med tangenten när en låst tangent trycks. */
+  onBlocked?: (key: string) => void
 }
 
 export interface Session {
@@ -23,6 +31,20 @@ export interface Session {
   destroy(): void
 }
 
+/** Låser musen och andra inmatningssätt än tangentbordet i övningsläge. */
+const lockedInput = EditorView.domEventHandlers({
+  mousedown(event, view) {
+    event.preventDefault()
+    view.focus()
+    return true
+  },
+  dblclick: (event) => (event.preventDefault(), true),
+  dragstart: (event) => (event.preventDefault(), true),
+  drop: (event) => (event.preventDefault(), true),
+  paste: (event) => (event.preventDefault(), true),
+  cut: (event) => (event.preventDefault(), true),
+})
+
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
@@ -32,11 +54,26 @@ export function createSession(options: SessionOptions): Session {
   const view = new EditorView({
     state: EditorState.create({
       doc: content,
-      extensions: [vim(), EditorView.updateListener.of(notify), ...extensions],
+      extensions: [
+        vim(),
+        EditorView.updateListener.of(notify),
+        ...(options.allowedKeys ? [lockedInput] : []),
+        ...extensions,
+      ],
     }),
     parent: options.parent ?? document.createElement('div'),
   })
   const cm = getCM(view)!
+  const { allowedKeys, onBlocked } = options
+  const onLockedKeyDown = (event: KeyboardEvent) => {
+    if (!allowedKeys) return
+    const key = keyFromEvent(event)
+    if (key === null || allowedKeys.has(key)) return
+    event.preventDefault()
+    event.stopPropagation()
+    onBlocked?.(key)
+  }
+  view.dom.addEventListener('keydown', onLockedKeyDown, true)
   // keyup kommer efter att pluginet hanterat tangenten, så läget är uppdaterat.
   view.dom.addEventListener('keyup', notify, true)
   cm.on('vim-mode-change', notify)
@@ -117,6 +154,7 @@ export function createSession(options: SessionOptions): Session {
   function destroy() {
     listeners.clear()
     view.dom.removeEventListener('keyup', notify, true)
+    view.dom.removeEventListener('keydown', onLockedKeyDown, true)
     view.destroy()
   }
 

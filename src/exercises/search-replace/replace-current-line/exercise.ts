@@ -17,6 +17,7 @@ export default defineExercise(
     start: { line: 5, col: 1 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: ':s/isOpen/isVisible/<CR>',
+    allowedKeys: 'u',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

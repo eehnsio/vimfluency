@@ -1,3 +1,4 @@
+import { displayKeys } from '../../engine/lock'
 import type { Exercise } from '../../exercises/types'
 
 interface Props {
@@ -28,6 +29,15 @@ export function ExerciseDetail({ exercise, onReset }: Props) {
       <h2 className="text-lg font-semibold">{exercise.title}</h2>
       <p className="text-sm leading-relaxed text-fg-muted">
         <Inline text={exercise.instructions} />
+      </p>
+      <p className="text-xs text-fg-muted">
+        Keys in play:{' '}
+        {displayKeys(exercise.solution, exercise.allowedKeys).map((key) => (
+          <code key={key} className="mr-1 rounded bg-term-bg px-1 font-mono text-term-fg">
+            {key}
+          </code>
+        ))}
+        All other keys and the mouse are locked.
       </p>
       {exercise.hints && exercise.hints.length > 0 && (
         <details className="text-sm text-fg-muted">

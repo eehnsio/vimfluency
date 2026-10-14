@@ -3,6 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { relativeLineNumbers } from '../engine/lineNumbers'
 import { evaluate, type EditorState } from '../engine/checks'
 import { editorTheme } from '../engine/editorTheme'
+import { deriveAllowedKeys } from '../engine/lock'
 import { createSession, type Session } from '../engine/session'
 import type { Exercise } from '../exercises/types'
 
@@ -11,6 +12,7 @@ export function useExerciseSession(exercise: Exercise) {
   const sessionRef = useRef<Session | null>(null)
   const [state, setState] = useState<EditorState | null>(null)
   const [completed, setCompleted] = useState(false)
+  const [blockedKey, setBlockedKey] = useState<string | null>(null)
 
   useEffect(() => {
     const parent = containerRef.current
@@ -22,6 +24,8 @@ export function useExerciseSession(exercise: Exercise) {
       content: file.content,
       start: exercise.start,
       extensions: [javascript({ jsx: true, typescript: true }), relativeLineNumbers, editorTheme],
+      allowedKeys: deriveAllowedKeys(exercise.solution, exercise.allowedKeys),
+      onBlocked: setBlockedKey,
     })
     sessionRef.current = session
 
@@ -33,6 +37,7 @@ export function useExerciseSession(exercise: Exercise) {
     const unsubscribe = session.subscribe(sync)
     setState(session.getState())
     setCompleted(false)
+    setBlockedKey(null)
     session.view.focus()
 
     return () => {
@@ -48,5 +53,5 @@ export function useExerciseSession(exercise: Exercise) {
     sessionRef.current?.view.focus()
   }, [])
 
-  return { containerRef, state, completed, reset }
+  return { containerRef, state, completed, blockedKey, reset }
 }

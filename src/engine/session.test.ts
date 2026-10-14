@@ -117,3 +117,65 @@ describe('session line numbers', () => {
     expect(numbers()).toEqual(['2', '1', '3', '1'])
   })
 })
+
+describe('session lock', () => {
+  const press = (target: Element, init: KeyboardEventInit) => {
+    const event = new KeyboardEvent('keydown', { bubbles: true, cancelable: true, ...init })
+    target.dispatchEvent(event)
+    return event
+  }
+
+  const locked = (content: string, allowed: string[], onBlocked = vi.fn()) => {
+    session = createSession({
+      parent: document.body,
+      content,
+      start: { line: 1, col: 1 },
+      allowedKeys: new Set(allowed),
+      onBlocked,
+    })
+    return { s: session, onBlocked }
+  }
+
+  it('lets allowed keys through and blocks the rest', () => {
+    const { s, onBlocked } = locked('foo bar baz', ['w'])
+    const content = s.view.contentDOM
+    expect(press(content, { key: 'w' }).defaultPrevented).toBe(true) // hanterad av vim
+    expect(onBlocked).not.toHaveBeenCalled()
+    expect(s.getState().cursor.col).toBe(5)
+
+    press(content, { key: 'e' })
+    expect(onBlocked).toHaveBeenCalledWith('e')
+    expect(s.getState().cursor.col).toBe(5)
+  })
+
+  it('blocks arrow keys and text entry in normal mode', () => {
+    const { s, onBlocked } = locked('abc', ['w'])
+    press(s.view.contentDOM, { key: 'ArrowRight' })
+    press(s.view.contentDOM, { key: 'x' })
+    expect(onBlocked.mock.calls.map(([key]) => key)).toEqual(['<Right>', 'x'])
+    expect(s.getState()).toMatchObject({ content: 'abc', cursor: { line: 1, col: 1 } })
+  })
+
+  it('does not block browser shortcuts', () => {
+    const { s, onBlocked } = locked('abc', ['w'])
+    const event = press(s.view.contentDOM, { key: 'r', metaKey: true })
+    expect(event.defaultPrevented).toBe(false)
+    expect(onBlocked).not.toHaveBeenCalled()
+  })
+
+  it('prevents mouse placement and pasting', () => {
+    const { s } = locked('abc', ['w'])
+    const down = new MouseEvent('mousedown', { bubbles: true, cancelable: true })
+    s.view.contentDOM.dispatchEvent(down)
+    expect(down.defaultPrevented).toBe(true)
+    const paste = new Event('paste', { bubbles: true, cancelable: true })
+    s.view.contentDOM.dispatchEvent(paste)
+    expect(paste.defaultPrevented).toBe(true)
+  })
+
+  it('leaves sendKeys unrestricted so reference solutions can run', () => {
+    const { s } = locked('foo bar', ['w'])
+    s.sendKeys('e')
+    expect(s.getState().cursor.col).toBe(3)
+  })
+})

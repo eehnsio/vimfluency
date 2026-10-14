@@ -11,6 +11,7 @@ export default defineExercise(
     start: { line: 1, col: 1 },
     checks: [{ type: 'cursorAt', line: 9 }, { type: 'contentUnchanged' }],
     solution: '8j',
+    allowedKeys: 'k',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )
