@@ -3,7 +3,7 @@ import { useCallback, useEffect, useRef, useState } from 'react'
 import { evaluate, onlyNeedsNormalMode, type SessionState } from '../engine/checks'
 import { editorTheme } from '../engine/editorTheme'
 import { deriveAllowedKeys } from '../engine/lock'
-import { cursorTarget, overshotTarget } from '../engine/overshoot'
+import { createOvershootTracker, cursorTarget } from '../engine/overshoot'
 import { createSession, type Session } from '../engine/session'
 import { activeContent } from '../exercises/define'
 import type { Exercise } from '../exercises/types'
@@ -47,21 +47,16 @@ export function useExerciseSession(exercise: Exercise) {
     })
     sessionRef.current = session
 
-    const target = cursorTarget(exercise.checks)
-    let previous = session.getState().cursor
+    const trackOvershoot = createOvershootTracker(cursorTarget(exercise.checks), session.getState().cursor)
 
-    const sync = () => {
+    const onSessionChange = () => {
       const next = session.getState()
       setState(next)
-      if (target && next.mode === 'normal') {
-        const moved = next.cursor.line !== previous.line || next.cursor.col !== previous.col
-        // Står kvar tills man startar om eller landar på målet.
-        if (moved && overshotTarget(previous, next.cursor, target)) setOvershot(true)
-        previous = next.cursor
-      }
+      // Varningen står kvar tills man startar om eller landar på målet.
+      if (trackOvershoot(next.cursor, next.mode)) setOvershot(true)
       if (evaluate(exercise.checks, next, initialContent).passed) setCompleted(true)
     }
-    const unsubscribe = session.subscribe(sync)
+    const unsubscribe = session.subscribe(onSessionChange)
     setState(session.getState())
     clearFeedback()
     session.view.focus()

@@ -1,4 +1,4 @@
-import type { Check } from '../exercises/types'
+import type { Check, Mode } from '../exercises/types'
 
 interface Position {
   line: number
@@ -28,4 +28,19 @@ export function overshotTarget(from: Position, to: Position, target: Target): bo
   }
   const point = { line: target.line, col: target.col }
   return compare(first, point) < 0 && compare(point, last) < 0
+}
+
+/**
+ * Minns var markören var senast och säger om nästa förflyttning hoppade förbi
+ * målet. Bara normalt läge räknas, så en visuell markering eller text man
+ * skriver in flyttar inte referenspunkten. Utan mål är svaret alltid `false`.
+ */
+export function createOvershootTracker(target: Target | undefined, initial: Position) {
+  let previous = initial
+  return (next: Position, mode: Mode): boolean => {
+    if (!target || mode !== 'normal') return false
+    const overshot = overshotTarget(previous, next, target)
+    previous = next
+    return overshot
+  }
 }

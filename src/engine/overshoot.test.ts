@@ -1,4 +1,4 @@
-import { cursorTarget, overshotTarget } from './overshoot'
+import { createOvershootTracker, cursorTarget, overshotTarget } from './overshoot'
 
 describe('overshotTarget', () => {
   const target = { line: 3, col: 10 }
@@ -37,5 +37,27 @@ describe('cursorTarget', () => {
 
   it('returns undefined without one', () => {
     expect(cursorTarget([{ type: 'mode', mode: 'normal' }])).toBeUndefined()
+  })
+})
+
+describe('createOvershootTracker', () => {
+  const target = { line: 1, col: 10 }
+
+  it('reports a jump past the target relative to the previous position', () => {
+    const track = createOvershootTracker(target, { line: 1, col: 1 })
+    expect(track({ line: 1, col: 5 }, 'normal')).toBe(false)
+    expect(track({ line: 1, col: 20 }, 'normal')).toBe(true)
+  })
+
+  it('only moves its reference point in normal mode', () => {
+    const track = createOvershootTracker(target, { line: 1, col: 1 })
+    expect(track({ line: 1, col: 20 }, 'insert')).toBe(false)
+    // Referenspunkten är fortfarande kolumn 1, så hoppet till 20 räknas.
+    expect(track({ line: 1, col: 20 }, 'normal')).toBe(true)
+  })
+
+  it('never reports without a target', () => {
+    const track = createOvershootTracker(undefined, { line: 1, col: 1 })
+    expect(track({ line: 5, col: 1 }, 'normal')).toBe(false)
   })
 })
