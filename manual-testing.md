@@ -15,6 +15,7 @@ Bocka av i en kopia, inte i den här filen.
 ## Introt och skalet
 
 - [ ] Första besöket visar skalet (`zsh` i titelraden), inte editorn.
+- [ ] Lektionen visar "Open the editor" och förklarar låset och `r` en gång, utan mål och hintar, tills `nvim` är öppnat.
 - [ ] Man kan skriva direkt utan att klicka.
 - [ ] `ls` + Enter visar `zsh: command not found: ls` och rensar raden.
 - [ ] Backspace suddar, och felet försvinner när man börjar skriva igen.
@@ -28,7 +29,7 @@ Bocka av i en kopia, inte i den här filen.
 
 Gör i några olika övningar, minst en rörelseövning, en ändringsövning och en prompt-övning (`:`/`/`).
 
-- [ ] En tangent som inte är med visar "`x` is locked in this exercise" och gör ingenting.
+- [ ] En tangent som inte är med gör ingenting och visar i gult "`x` is locked here. Use … or `r` to start over." med övningens tangenter. Piltangenter visas som `←` `→` `↑` `↓`.
 - [ ] Piltangenter, Home, End och Delete är låsta.
 - [ ] Musklick i editorn flyttar inte markören, men editorn behåller fokus.
 - [ ] Dubbelklick och dra markerar ingen text.
@@ -41,6 +42,9 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] Backspace suddar i insert-läge och i `:`/`/`-prompten.
 - [ ] Låsta tecken går inte att skriva i prompten (prova `x` efter `/` i "Search: / and n").
 - [ ] Esc tar en ur insert, visual och prompten i alla övningar.
+- [ ] Tab och Shift+Tab i normalläge flyttar fokus ut ur editorn (Shift+Tab till lektionen). I insert-läge är Tab låst.
+- [ ] Fokus utanför editorn: statusraden säger "The editor is not focused", och Esc ger editorn fokus igen.
+- [ ] Byt till ett annat program och tillbaka: meddelandet försvinner när editorn får fokus igen.
 - [ ] Tryck och håll en bokstav på macOS: accentmenyn kan dyka upp, men inget accenttecken hamnar i texten.
 
 ## Feedback i statusraden
@@ -57,20 +61,33 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] Enter går till nästa övning och markören står i den nya editorn.
 - [ ] `r` börjar om samma övning.
 - [ ] Alla andra tangenter gör ingenting och editorn är låst.
-- [ ] Knapparna "Try again" och "Next" fungerar med mus, och med Tab + Enter/mellanslag.
+- [ ] Knapparna "Start over" och "Next" fungerar med mus, och med Tab + Enter/mellanslag.
 - [ ] Sista övningen har ingen "Next"-knapp och Enter gör ingenting.
 
-## Sidopanelen och framsteg
+## Lektionen och målet
 
-- [ ] Hintarna visas en i taget, och efter sista hinten kommer "Still stuck? Show the keys".
+- [ ] Första raden i editorn är `// Goal: …`, markerad i accentfärg. Det finns inga fler kommentarer i början av filen.
+- [ ] Lektionen förklarar tangenterna utan att upprepa målet eller avslöja svaret.
+- [ ] "Keys in play" visar bara kommandotangenter: `0-9` istället för enskilda siffror, inga bokstäver från texten man skriver, `gg` och `dd` som ett chip.
+- [ ] Hintarna visas en i taget, och efter sista hinten kommer "Still stuck? Show the keys". Efter varje klick har editorn fokus, så att man kan prova direkt.
+- [ ] Skärmläsare (VoiceOver): en ny hint läses upp.
 - [ ] Byter man övning börjar hintarna om från noll.
-- [ ] Visa tangenterna och klara övningen: dämpad bock i listan istället för grön.
-- [ ] Reset-knappen startar om övningen och ger editorn fokus.
-- [ ] Klicka på en övning i listan: den öppnas och editorn får fokus.
-- [ ] En helt klar kategori fälls ihop med en bock, men inte medan den valda övningen ligger i den.
-- [ ] En hopfälld kategori går att öppna och stänga med ett klick.
+- [ ] Visa tangenterna och klara övningen: dämpad bock i kurslistan istället för grön.
+- [ ] "Start over" startar om övningen och ger editorn fokus. Samma ord används i bannern och statusraden.
+- [ ] Lång text scrollar i lektionen utan att terminalen flyttar sig.
+
+## Kurslådan
+
+- [ ] Lådan är stängd vid start. Lektionens rubrik visar kategori, plats (t.ex. `1/4`) och progress.
+- [ ] Knappen i rubriken öppnar lådan från vänster, med fokus på den aktuella övningen.
+- [ ] Titlarna får plats på en rad, och tangenterna visas som chips till höger (t.ex. `j` `k`).
+- [ ] Alla kategorier syns med antal klara, och en helt klar kategori får en bock.
+- [ ] Kategorin med den valda övningen är öppen. Klick på en annan kategori öppnar och stänger den.
+- [ ] Klick på en övning öppnar den, lådan stängs och editorn får fokus, även om det är samma övning.
+- [ ] Esc eller klick utanför stänger lådan och editorn får fokus igen.
+- [ ] Medan lådan är öppen går det inte att nå editorn eller lektionen med Tab eller mus.
+- [ ] Lådan fungerar medan skalet är öppet, och tangenterna hamnar inte i skalet.
 - [ ] Ladda om: bockar, senast vald övning och "klarad med hjälp" finns kvar.
-- [ ] Långa listor scrollar i sidopanelen utan att terminalen flyttar sig.
 
 ## Terminalfönstret
 
@@ -90,7 +107,7 @@ Lös varje övning med tangenterna nedan, med riktigt tangentbord. Prova också 
 | | Where am I? | `2j4l` | |
 | | Which mode am I in? | `ihello<Esc>` | Kräver Esc innan den klaras |
 | | Everything can be configured | `:set nonumber<CR>` | Radnumren försvinner, och kommer tillbaka efter `r` |
-| Basics | Move down and up | `8j` | `j`/`k` följer de synliga raderna |
+| Basics | Move down and up | `6j` | `j`/`k` följer de synliga raderna |
 | | Move left and right | `17l` | |
 | | Put it together | `2j12l` | |
 | Motions | Jump between words | `4w` | |
@@ -100,7 +117,7 @@ Lös varje övning med tangenterna nedan, med riktigt tangentbord. Prova också 
 | | End of the line | `$` | Alt+4 på svensk Mac |
 | Navigation | Bottom of the file | `G` | Landar på sista kodraden |
 | | Top of the file | `gg` | |
-| | Jump to a line number | `:16<CR>` | Prompten syns, Backspace och Esc fungerar |
+| | Jump to a line number | `:15<CR>` | Prompten syns, Backspace och Esc fungerar |
 | | Jump to the matching brace | `%` | |
 | Editing | Insert text | `iBig <Esc>` | Mellanslag skrivs |
 | | Append at the end of the line | `A;<Esc>` | |

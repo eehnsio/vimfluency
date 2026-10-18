@@ -9,9 +9,9 @@ Det här dokumentet beskriver vad som är byggt och vad som återstår. Arkitekt
 | Skal | Vite + React + TypeScript (strict), Tailwind v4 med tokens, Vitest + Testing Library, oxlint |
 | Engine | `keys`, `session`, `checks`, `lock`, `overshoot`, `lineNumbers`, `editorTheme` |
 | Övningar | 9 kategorier, 32 övningar. Varje lösning bevisas av `exercises.test.ts` |
-| UI | Sidopanel (övning, instruktion, tangenter i spel, hintar, lista) och terminalfönster med statusrad och kommandorad |
-| Framsteg | `localStorage` via `useProgress`, bock i listan, senast vald övning kommer ihåg |
-| Hintar | Hintruta med en hint i taget, sedan "Show the keys" som sista utväg (markeras som klarad med hjälp) |
+| UI | Två kolumner: lektion (rubrik med plats och progress, förklaring, tangenter i spel, hintar). Målet står bara på den markerade första raden i editorn och terminalfönster med statusrad och kommandorad. Kurslistan är en låda som börjar stängd |
+| Framsteg | `localStorage` via `useProgress`, bock i kurslistan, senast vald övning kommer ihåg |
+| Hintar | En hint i taget i lektionskolumnen, sedan "Show the keys" som sista utväg (markeras som klarad med hjälp) |
 | Pedagogik | Låsta tangenter per övning, `r` som nödutgång, Enter/`r` efter klarad övning, varning vid överskjutning, relativa radnummer |
 
 Kategorier och övningar:
