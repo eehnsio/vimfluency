@@ -80,7 +80,7 @@ interface KeyLock {
 
 /**
  * Tangentlåset för en övning. Returnerar en `keydown`-lyssnare som stoppar allt
- * utom `allowedKeys`.
+ * utom `allowedKeys`. Tab och Shift+Tab i normalläge flyttar fokus ut ur editorn.
  *
  * `r` är nödutgången och räknas som låst även när lösningen innehåller ett `r`
  * (t.ex. i texten man skriver). I insert-läge och i prompter är `r` däremot ett
@@ -97,6 +97,12 @@ export function createKeyLock({ view, cm, allowedKeys, onBlocked }: KeyLock) {
     if (!isEmergencyExit && allowedKeys.has(key)) return
     // Man ska alltid kunna sudda när man skrivit fel, i insert-läge och i prompter.
     if (key === '<BS>' && typesText) return
+    // Tab flyttar fokus ut ur editorn, annars är den en tangentbordsfälla (WCAG
+    // 2.1.2). Pluginet får inte se tangenten, men webbläsaren gör sitt.
+    if (key === '<Tab>' && !typesText) {
+      event.stopPropagation()
+      return
+    }
 
     event.preventDefault()
     event.stopPropagation()

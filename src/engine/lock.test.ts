@@ -1,4 +1,4 @@
-import { deriveAllowedKeys, displayKeys, keyFromEvent } from './lock'
+import { deriveAllowedKeys, displayKeys, keyFromEvent, prettyKey } from './lock'
 
 const key = (init: KeyboardEventInit) => new KeyboardEvent('keydown', init)
 
@@ -26,7 +26,35 @@ describe('deriveAllowedKeys', () => {
 
 describe('displayKeys', () => {
   it('lists distinct keys once', () => {
-    expect(displayKeys('dd..', 'u')).toEqual(['d', '.', 'u'])
+    expect(displayKeys('w2w')).toEqual(['w', '0-9'])
+  })
+
+  it('shows doubled commands as one key', () => {
+    expect(displayKeys('dd..', 'u')).toEqual(['dd', '.', 'u'])
+    expect(displayKeys('gg')).toEqual(['gg'])
+  })
+
+  it('shows counts as one chip', () => {
+    expect(displayKeys('2j12l', 'hk')).toEqual(['0-9', 'j', 'l', 'h', 'k'])
+  })
+
+  it('leaves out what is typed in insert mode', () => {
+    expect(displayKeys('cwWorld<Esc>', 'u')).toEqual(['c', 'w', 'Esc', 'u'])
+    expect(displayKeys("ci'Update name<Esc>")).toEqual(['c', 'i', "'", 'Esc'])
+    expect(displayKeys("oimport { useMemo } from 'react'<Esc>")).toEqual(['o', 'Esc'])
+    expect(displayKeys('S<section>New</section><Esc>')).toEqual(['S', 'Esc'])
+  })
+
+  it('leaves out what is typed in a prompt', () => {
+    expect(displayKeys(':%s/count/total/g<CR>')).toEqual([':', 'Enter'])
+    expect(displayKeys('/NOTE<CR>nn')).toEqual(['/', 'Enter', 'n'])
+  })
+
+  it('keeps the arguments of motions, operators and visual text objects', () => {
+    expect(displayKeys('dt)')).toEqual(['d', 't', ')'])
+    expect(displayKeys('fw')).toEqual(['f', 'w'])
+    expect(displayKeys('vi(d')).toEqual(['v', 'i', '(', 'd'])
+    expect(displayKeys('Vjd')).toEqual(['V', 'j', 'd'])
   })
 })
 
@@ -47,5 +75,15 @@ describe('keyFromEvent', () => {
 
   it('passes dead keys through so they can be blocked', () => {
     expect(keyFromEvent(key({ key: 'Dead' }))).toBe('Dead')
+  })
+})
+
+describe('prettyKey', () => {
+  it('writes keys the way you would say them', () => {
+    expect(prettyKey('<Right>')).toBe('→')
+    expect(prettyKey('<CR>')).toBe('Enter')
+    expect(prettyKey('<C-d>')).toBe('Ctrl-d')
+    expect(prettyKey(' ')).toBe('Space')
+    expect(prettyKey('x')).toBe('x')
   })
 })

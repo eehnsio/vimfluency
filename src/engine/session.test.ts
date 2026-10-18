@@ -223,6 +223,20 @@ describe('session lock', () => {
     expect(onBlocked).not.toHaveBeenCalled()
   })
 
+  it('lets Tab move focus out of the editor in normal mode, without reaching vim', () => {
+    const { s, onBlocked } = locked('abc', ['i'])
+    for (const shiftKey of [false, true]) {
+      const event = press(s.view.contentDOM, { key: 'Tab', shiftKey })
+      expect(event.defaultPrevented).toBe(false) // webbläsaren flyttar fokus
+    }
+    expect(onBlocked).not.toHaveBeenCalled()
+
+    // I insert-läge är Tab ett tecken och följer låset som vanligt.
+    press(s.view.contentDOM, { key: 'i' })
+    press(s.view.contentDOM, { key: 'Tab' })
+    expect(onBlocked).toHaveBeenCalledWith('<Tab>')
+  })
+
   it('does not block browser shortcuts', () => {
     const { s, onBlocked } = locked('abc', ['w'])
     const event = press(s.view.contentDOM, { key: 'r', metaKey: true })
