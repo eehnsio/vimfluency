@@ -88,6 +88,7 @@ Kända begränsningar:
 - `:set number`, `:set nu`, `:set relativenumber` och `:set rnu` styr radnumren. De är definierade med `Vim.defineOption` i `session.ts`. `:set nu!` (toggle) stöds inte av pluginet.
 - `/` och `:` öppnar en DOM-input i pluginet. `session.ts` matar in tangenterna där. Vanliga tecken i insert-läge skrivs med `view.dispatch`.
 - `sendKeys` skriver direkt i promptens input. För att bevisa att låset släpper igenom en prompt-övning skickas riktiga `keydown`-events med `keyCode` (pluginet läser det), se `exercises.test.ts`.
+- GitHub Pages (`.github/workflows/deploy.yml`) serverar sidan under `/vimfluency/`. Workflowet sätter `PAGES_BASE`, som blir Vites `base`. Lokalt och på andra värdar är `base` roten. Använd relativa sökvägar eller Vites import för resurser, aldrig hårdkodade `/…`.
 - Bygget får en Content-Security-Policy via `vite.config.ts` (bara `build`, inte dev). `style-src 'unsafe-inline'` krävs för att CodeMirror lägger in `<style>` vid körning. Nya externa resurser (typsnitt, CDN) kräver ändring där.
 - macOS tryck-och-håll (accenttecken) kan inte stängas av från webben: `defaults write com.google.Chrome ApplePressAndHoldEnabled -bool false`.
 

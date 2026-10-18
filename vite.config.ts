@@ -29,8 +29,13 @@ const csp: Plugin = {
   ],
 }
 
+// GitHub Pages serverar sidan under /vimfluency/. Sätts bara av deploy-workflowet,
+// så dev, preview och andra värdar (t.ex. Vercel) använder roten.
+const base = process.env.PAGES_BASE ?? '/'
+
 // https://vite.dev/config/
 export default defineConfig({
+  base,
   plugins: [react(), tailwindcss(), csp],
   test: {
     environment: 'jsdom',

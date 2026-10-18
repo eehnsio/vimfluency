@@ -4,6 +4,8 @@ Learn Vim by doing. Interactive exercises for React developers: navigate code, s
 
 Everything runs client side. There is no backend.
 
+Live: https://eehnsio.github.io/vimfluency/ (deployed from `main`)
+
 ## Getting started
 
 ```sh
