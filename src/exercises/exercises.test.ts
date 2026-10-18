@@ -93,3 +93,35 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     session.destroy()
   })
 })
+
+describe('prompt exercises with real key events', () => {
+  // `sendKeys` skriver direkt i promptens inputfält. Här går tangenterna genom
+  // det låsta `keydown`-flödet som i webbläsaren, med `keyCode` som pluginet läser.
+  const KEY_CODES: Record<string, number> = { Enter: 13, Escape: 27 }
+  const keydown = (target: Element, key: string) => {
+    const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+    Object.defineProperty(event, 'keyCode', { value: KEY_CODES[key] ?? key.toUpperCase().charCodeAt(0) })
+    target.dispatchEvent(event)
+  }
+  const typeKey = (session: Session, key: string) => {
+    const input = session.view.dom.querySelector('input')
+    if (!input) return keydown(session.view.contentDOM, key)
+    keydown(input, key)
+    if (key.length === 1) {
+      input.value += key
+      input.dispatchEvent(new Event('input', { bubbles: true }))
+    }
+  }
+
+  it.each([['search-next'], ['replace-current-line'], ['rename-variable']])(
+    '%s is solved by typing its keys into the locked prompt',
+    (id) => {
+      const exercise = getExercise(id)!
+      const session = createExerciseSession(exercise)
+      const tokens = parseKeys(exercise.solution)
+      for (const token of tokens) typeKey(session, token === '<CR>' ? 'Enter' : token)
+      expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).failed).toEqual([])
+      session.destroy()
+    },
+  )
+})
