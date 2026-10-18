@@ -1,5 +1,4 @@
 // Goal: jump to the last line of the file.
-// `G` goes to the last line and `gg` goes back to the first.
 
 import { useState } from 'react'
 import { useEffect } from 'react'

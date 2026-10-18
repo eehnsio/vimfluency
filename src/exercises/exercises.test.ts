@@ -1,8 +1,9 @@
 import { evaluate } from '../engine/checks'
 import { parseKeys } from '../engine/keys'
+import { deriveAllowedKeys, displayKeys } from '../engine/lock'
 import { createExerciseSession } from '../engine/exerciseSession'
 import type { Session } from '../engine/session'
-import { activeContent } from './define'
+import { activeContent, goalOf } from './define'
 import { allExercises, categories, getExercise, nextExercise } from './registry'
 
 describe('registry', () => {
@@ -36,6 +37,23 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     expect(inside(exercise.start.line, exercise.start.col)).toBe(true)
     for (const check of exercise.checks) {
       if (check.type === 'cursorAt') expect(inside(check.line, check.col ?? 1)).toBe(true)
+    }
+  })
+
+  it('states its goal on the first line, and the instructions only explain', () => {
+    // Lektionen visar målet från filen. Instruktionen ska inte upprepa det.
+    expect(goalOf(exercise)).toBeTruthy()
+    expect(exercise.instructions).not.toContain(goalOf(exercise))
+  })
+
+  it('only shows keys in play that the lock lets through', () => {
+    const allowed = deriveAllowedKeys(exercise.solution, exercise.allowedKeys)
+    const asLockKeys = (key: string) => {
+      const named = ({ Enter: '<CR>', Esc: '<Esc>', '0-9': '0' } as Record<string, string>)[key]
+      return named ? [named] : [...key] // `gg` är två tryck på `g`
+    }
+    for (const key of displayKeys(exercise.solution, exercise.allowedKeys)) {
+      for (const lockKey of asLockKeys(key)) expect(allowed).toContain(lockKey)
     }
   })
 

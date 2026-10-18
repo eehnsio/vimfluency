@@ -21,3 +21,12 @@ export function defineExercise(meta: ExerciseMeta, rawFiles: Record<string, stri
   }
   return { ...meta, files }
 }
+
+/**
+ * Målet står på första raden i aktiv fil som `// Goal: …`. Lektionen visar
+ * samma text, så målet skrivs bara på ett ställe.
+ */
+export function goalOf(exercise: Exercise): string | undefined {
+  const firstLine = activeContent(exercise).split('\n')[0]
+  return /^\/\/ Goal: (.+)$/.exec(firstLine)?.[1]
+}

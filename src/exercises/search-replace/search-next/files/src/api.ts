@@ -1,5 +1,4 @@
 // Goal: put the cursor on the third NOTE comment below.
-// `/NOTE` + Enter searches. `n` goes to the next match, `N` to the previous.
 
 function load() {
   // NOTE: cache this

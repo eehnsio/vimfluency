@@ -5,9 +5,9 @@ export default defineExercise(
     id: 'file-top',
     title: 'Top of the file: gg',
     instructions:
-      '`gg` jumps to the first line of the file. Go to the first line, which is this comment.',
+      '`gg` jumps to the first line of the file.',
     activeFile: 'src/hooks.ts',
-    start: { line: 9, col: 1 },
+    start: { line: 8, col: 1 },
     checks: [{ type: 'cursorAt', line: 1 }, { type: 'contentUnchanged' }],
     solution: 'gg',
   },

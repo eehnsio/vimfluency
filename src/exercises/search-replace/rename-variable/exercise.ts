@@ -1,7 +1,6 @@
 import { defineExercise } from '../../define'
 
 const expected = `// Goal: give the state variable the name \`total\` everywhere it is used.
-// \`:%s/old/new/g\` replaces every match on every line. Finish with Enter.
 
 import { useState } from 'react'
 
@@ -17,7 +16,7 @@ export default defineExercise(
     id: 'rename-variable',
     title: 'Rename a variable',
     instructions:
-      'Rename every `count` to `total` in the file with one command. `:%s/old/new/g` substitutes on all lines (`%`) and every match per line (`g`). Every occurrence changes, so check the result against the whole file.',
+      '`:%s/old/new/g` substitutes on all lines (`%`) and every match per line (`g`). Every occurrence changes, so check the result against the whole file.',
     hints: ['Start the command with `:` and finish it with Enter.'],
     activeFile: 'src/Counter.tsx',
     start: { line: 1, col: 1 },

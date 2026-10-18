@@ -1,5 +1,4 @@
-// Goal: jump to line 16, the line that says `answer`.
-// `:16` followed by Enter jumps to that line.
+// Goal: jump to line 15, the line that says `answer`.
 
 const item1 = 1
 const item2 = 2
