@@ -56,3 +56,25 @@ describe('ExerciseDetail hints', () => {
     expect(screen.queryByText('First hint')).not.toBeInTheDocument()
   })
 })
+
+describe('ExerciseDetail focus', () => {
+  it('gives the editor focus back after a hint and after showing the keys', async () => {
+    const user = userEvent.setup()
+    const onFocusEditor = vi.fn()
+    render(<ExerciseDetail exercise={exercise} onReset={() => {}} onFocusEditor={onFocusEditor} />)
+    await user.click(screen.getByRole('button', { name: 'Show hint 1 of 2' }))
+    expect(onFocusEditor).toHaveBeenCalledTimes(1)
+    await user.click(screen.getByRole('button', { name: 'Show hint 2 of 2' }))
+    await user.click(screen.getByRole('button', { name: /Show the keys/ }))
+    expect(onFocusEditor).toHaveBeenCalledTimes(3)
+  })
+
+  it('announces revealed hints in a live region that exists from the start', async () => {
+    const user = userEvent.setup()
+    render(<ExerciseDetail exercise={exercise} onReset={() => {}} />)
+    const region = screen.getByRole('region', { name: 'Hints' }).querySelector('[aria-live="polite"]')!
+    expect(region).toBeEmptyDOMElement()
+    await user.click(screen.getByRole('button', { name: 'Show hint 1 of 2' }))
+    expect(region).toHaveTextContent('First hint')
+  })
+})

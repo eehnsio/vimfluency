@@ -1,14 +1,19 @@
 import type { ReactNode } from 'react'
 import type { SessionState } from '../../engine/checks'
+import { prettyKey } from '../../engine/lock'
 
 interface Props {
   state: SessionState | null
   filename: string
   blockedKey?: string | null
+  /** Tangenterna övningen använder ("Keys in play"), för låst-meddelandet. */
+  keysInPlay?: string[]
   /** Texten är rätt, men man måste gå tillbaka till normalt läge. */
   needsEsc?: boolean
   /** Markören hoppade förbi målet. */
   overshot?: boolean
+  /** Fokus är utanför editorn, så tangenterna når den inte. */
+  unfocused?: boolean
 }
 
 const MODE_COLOR = {
@@ -40,10 +45,19 @@ function Key({ children }: { children: ReactNode }) {
 }
 
 /** Statusraden som i nvim, följd av kommandoraden där meddelanden visas. */
-export function StatusLine({ state, filename, blockedKey, overshot, needsEsc }: Props) {
+export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overshot, needsEsc, unfocused }: Props) {
   const mode = state?.mode ?? 'normal'
-  // Ett meddelande i taget: Esc-uppmaningen går före låst tangent, som går före överskjutet mål.
-  const message = needsEsc ? 'needsEsc' : blockedKey ? 'blocked' : overshot ? 'overshot' : null
+  // Ett meddelande i taget. Utan fokus når inga tangenter editorn, så det går först.
+  // Sedan Esc-uppmaningen, låst tangent och överskjutet mål.
+  const message = unfocused
+    ? 'unfocused'
+    : needsEsc
+      ? 'needsEsc'
+      : blockedKey
+        ? 'blocked'
+        : overshot
+          ? 'overshot'
+          : null
   return (
     <div className="font-mono text-sm">
       <div className="flex items-stretch bg-surface-raised">
@@ -55,15 +69,26 @@ export function StatusLine({ state, filename, blockedKey, overshot, needsEsc }: 
           {state ? `${state.cursor.line}:${state.cursor.col}` : '–'}
         </span>
       </div>
-      <div className="h-7 px-3 py-1 text-xs text-fg-muted">
+      <div className="h-8 px-3 py-1.5 text-sm text-fg-muted">
+        {message === 'unfocused' && (
+          <span role="status">
+            The editor is not focused. Click it or press <Key>Esc</Key> to keep going.
+          </span>
+        )}
         {message === 'needsEsc' && (
           <span role="status" className="text-success">
             That looks right. Press <Key>Esc</Key> to go back to normal mode.
           </span>
         )}
         {message === 'blocked' && (
-          <span role="alert">
-            <Key>{blockedKey}</Key> is locked in this exercise. Stuck? Press <Key>r</Key> to start over.
+          <span role="alert" className="text-warning">
+            <Key>{prettyKey(blockedKey!)}</Key> is locked here. Use{' '}
+            {keysInPlay.map((key) => (
+              <span key={key}>
+                <Key>{key}</Key>{' '}
+              </span>
+            ))}
+            or <Key>r</Key> to start over.
           </span>
         )}
         {message === 'overshot' && (

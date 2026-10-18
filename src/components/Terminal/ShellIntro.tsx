@@ -18,6 +18,8 @@ export function ShellIntro({ onOpenEditor }: Props) {
     // Capture-fasen och stopPropagation så att den dolda editorn aldrig ser tangenterna.
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.metaKey || event.ctrlKey || event.altKey) return
+      // Kurslistan ligger ovanpå skalet och tar sina egna tangenter.
+      if (event.target instanceof Element && event.target.closest('[role="dialog"]')) return
       event.stopPropagation()
       if (event.key === 'Tab' || event.key === ' ') event.preventDefault()
 

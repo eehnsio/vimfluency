@@ -1,30 +1,53 @@
 import { render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
-import { allExercises, getExercise } from './exercises/registry'
+import { allExercises, categories, getExercise } from './exercises/registry'
 
 beforeEach(() => localStorage.clear())
 
 describe('App', () => {
-  it('renders the shell with the first exercise selected', () => {
+  it('starts on the first exercise', () => {
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], openedNvim: true }))
     render(<App />)
     expect(screen.getByRole('heading', { level: 1, name: 'vimfluency' })).toBeInTheDocument()
     const first = allExercises[0]
     expect(screen.getByRole('heading', { level: 2, name: first.title })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: first.title })).toHaveAttribute('aria-current', 'true')
+    expect(screen.getByRole('button', { name: /Start here 1\/4/ })).toBeInTheDocument()
+    expect(document.querySelector('.cm-goal')).toHaveTextContent('// Goal: move the cursor down three lines.')
   })
 
-  it('switches exercise and remembers the selection', async () => {
+  it('opens the course closed-by-default drawer, switches exercise and remembers it', async () => {
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], openedNvim: true }))
     const user = userEvent.setup()
-    const target = allExercises[allExercises.length - 1]
+    const lastCategory = categories[categories.length - 1]
+    const target = lastCategory.exercises[lastCategory.exercises.length - 1]
     const { unmount } = render(<App />)
-    await user.click(screen.getByRole('button', { name: target.title }))
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+
+    await user.click(screen.getByRole('button', { name: /Start here/ }))
+    const drawer = screen.getByRole('dialog', { name: 'Course' })
+    expect(within(drawer).getByRole('button', { name: allExercises[0].title })).toHaveFocus()
+    await user.click(within(drawer).getByRole('button', { name: new RegExp(`^${lastCategory.title}`) }))
+    await user.click(within(drawer).getByRole('button', { name: target.title }))
+
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
     expect(screen.getByRole('heading', { level: 2, name: target.title })).toBeInTheDocument()
+    expect(document.activeElement).toHaveClass('cm-content')
     unmount()
 
     render(<App />)
     const detail = screen.getByRole('article')
     expect(within(detail).getByRole('heading', { name: target.title })).toBeInTheDocument()
+  })
+
+  it('closes the drawer with Esc and gives the editor focus back', async () => {
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], openedNvim: true }))
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /Start here/ }))
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(document.activeElement).toHaveClass('cm-content')
   })
 
   it('shows the file in the editor', () => {
@@ -47,7 +70,7 @@ describe('App completion flow', () => {
     document.querySelector<HTMLElement>('.cm-content')!.focus()
     await user.keyboard(exercise.solution)
     expect(await screen.findByRole('status')).toHaveTextContent('Exercise complete')
-    expect(screen.getByRole('button', { name: new RegExp(exercise.title) })).toHaveTextContent('(completed)')
+    expect(screen.getByRole('progressbar')).toHaveAttribute('aria-valuenow', '1')
     expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toContain(exercise.id)
   })
 
@@ -111,7 +134,7 @@ describe('App locking', () => {
     render(<App />)
     document.querySelector<HTMLElement>('.cm-content')!.focus()
     await user.keyboard('b')
-    expect(await screen.findByRole('alert')).toHaveTextContent('b is locked in this exercise')
+    expect(await screen.findByRole('alert')).toHaveTextContent('b is locked here. Use 0-9 w or r to start over.')
     expect(screen.getByText(/Keys in play/)).toBeInTheDocument()
   })
 })
@@ -122,11 +145,24 @@ describe('App intro shell', () => {
     render(<App />)
     expect(screen.getByText(/Don't be scared/)).toBeInTheDocument()
     expect(screen.getByTestId('prompt')).toBeInTheDocument()
+    // Ingen övning och inga hintar innan editorn är öppen.
+    expect(screen.queryByRole('heading', { name: allExercises[0].title })).not.toBeInTheDocument()
+    expect(screen.queryByRole('region', { name: 'Hints' })).not.toBeInTheDocument()
 
     await user.keyboard('nvim{Enter}')
     expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
     expect(screen.getByText('nvim src/App.tsx')).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: allExercises[0].title })).toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).openedNvim).toBe(true)
+  })
+
+  it('lets the course drawer take keys while the shell is open', async () => {
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /Start here/ }))
+    await user.keyboard('{Escape}')
+    expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
+    expect(screen.getByTestId('prompt')).toBeInTheDocument()
   })
 
   it('does not show the shell again once nvim has been opened', () => {
@@ -140,5 +176,23 @@ describe('App intro shell', () => {
     localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
     render(<App />)
     expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
+  })
+})
+
+describe('App focus', () => {
+  it('says when the editor has lost focus, and Esc brings it back', async () => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    const user = userEvent.setup()
+    render(<App />)
+    await user.click(screen.getByRole('button', { name: /^Start over/ }))
+    expect(document.activeElement).toHaveClass('cm-content')
+
+    screen.getByRole('button', { name: /show all exercises/ }).focus()
+    expect(await screen.findByText(/The editor is not focused/)).toBeInTheDocument()
+
+    await user.keyboard('{Escape}')
+    expect(document.activeElement).toHaveClass('cm-content')
+    expect(screen.queryByText(/The editor is not focused/)).not.toBeInTheDocument()
   })
 })
