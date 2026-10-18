@@ -39,10 +39,13 @@ Idéer:
 - Easter eggs (`:q` i en övning, `:wq`/`ZZ`, bekräftelse när en kategori är klar).
 - Startsida som text i editorn med progress.
 - Fler övningar, och flera filer i en övning (filträd, `:e`, `gd`).
-- Router med djuplänkar, deploy-konfiguration.
+- Router med djuplänkar.
+- Slutlig värd. GitHub Pages körs som experiment, Vercel är alternativet.
 
 ## Verifiering
 
+- CI (`.github/workflows/ci.yml`) kör lint, typecheck, test och build på varje PR och push till `main`.
+- Deploy (`.github/workflows/deploy.yml`) kör testerna och publicerar till GitHub Pages vid push till `main`.
 - `npm test`: alla övningar bevisas lösbara, plus enhets-, sessions-, lås- och komponenttester.
 - `npm run typecheck`, `npm run lint` och `npm run build` ger en statisk `dist/` utan fel.
-- `npm run dev`: lös övningarna manuellt i webbläsaren.
+- Manuellt: gå igenom `manual-testing.md` mot `npm run build && npm run preview`.
