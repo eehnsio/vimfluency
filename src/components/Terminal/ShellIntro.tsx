@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react'
+import { Code, Kbd } from '../Kbd'
 
 interface Props {
   onOpenEditor: () => void
@@ -59,8 +60,7 @@ export function ShellIntro({ onOpenEditor }: Props) {
       </p>
       <p className="mt-4">
         First, let&apos;s open the editor. Type{' '}
-        <code className="rounded bg-surface-raised px-1.5 text-accent">nvim</code> and press{' '}
-        <kbd className="rounded bg-surface-raised px-1.5">Enter</kbd>.
+        <Code>nvim</Code> and press <Kbd>Enter</Kbd>.
       </p>
       <p className="mt-6" data-testid="prompt">
         <span className="text-accent">~/vimfluency</span> <span className="text-success">$</span> {typed}

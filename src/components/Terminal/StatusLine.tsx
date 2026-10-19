@@ -1,6 +1,6 @@
-import type { ReactNode } from 'react'
 import type { SessionState } from '../../engine/checks'
 import { prettyKey } from '../../engine/lock'
+import { Kbd } from '../Kbd'
 
 interface Props {
   state: SessionState | null
@@ -40,10 +40,6 @@ function scrollPercent(state: SessionState) {
   return `${Math.round((state.cursor.line / lines) * 100)}%`
 }
 
-function Key({ children }: { children: ReactNode }) {
-  return <code className="rounded bg-surface-raised px-1 text-fg">{children}</code>
-}
-
 /** Statusraden som i nvim, följd av kommandoraden där meddelanden visas. */
 export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overshot, needsEsc, unfocused }: Props) {
   const mode = state?.mode ?? 'normal'
@@ -72,28 +68,28 @@ export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overs
       <div className="h-8 px-3 py-1.5 text-sm text-fg-muted">
         {message === 'unfocused' && (
           <span role="status">
-            The editor is not focused. Click it or press <Key>Esc</Key> to keep going.
+            The editor is not focused. Click it or press <Kbd>Esc</Kbd> to keep going.
           </span>
         )}
         {message === 'needsEsc' && (
           <span role="status" className="text-success">
-            That looks right. Press <Key>Esc</Key> to go back to normal mode.
+            That looks right. Press <Kbd>Esc</Kbd> to go back to normal mode.
           </span>
         )}
         {message === 'blocked' && (
           <span role="alert" className="text-warning">
-            <Key>{prettyKey(blockedKey!)}</Key> is locked here. Use{' '}
+            <Kbd>{prettyKey(blockedKey!)}</Kbd> is locked here. Use{' '}
             {keysInPlay.map((key) => (
               <span key={key}>
-                <Key>{key}</Key>{' '}
+                <Kbd>{key}</Kbd>{' '}
               </span>
             ))}
-            or <Key>r</Key> to start over.
+            or <Kbd>r</Kbd> to start over.
           </span>
         )}
         {message === 'overshot' && (
           <span role="alert" className="text-danger">
-            You went past the target. Press <Key>r</Key> to start over.
+            You went past the target. Press <Kbd>r</Kbd> to start over.
           </span>
         )}
       </div>

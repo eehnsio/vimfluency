@@ -11,6 +11,11 @@
   --color-term-bg: #0d0f13;
   --color-term-fg: #c9d1d9;
 
+  /* Fönsterknapparna i terminalens titelrad (macOS-färger). */
+  --color-window-close: #ff5f57;
+  --color-window-minimize: #febc2e;
+  --color-window-zoom: #28c840;
+
   --font-sans: ui-sans-serif, system-ui, sans-serif;
   --font-mono: ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
 

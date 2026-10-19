@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { Kbd } from '../Kbd'
 import type { Category } from '../../exercises/types'
 
 /** "Move down and up: j and k" → namn och tangenter, så att tangenterna kan visas som chips. */
@@ -43,7 +44,7 @@ export function CourseOutline({ categories, selectedId, completedIds, assistedId
             className="h-1 flex-1 overflow-hidden rounded-full bg-border"
           >
             <div
-              className="h-full origin-left bg-success transition-transform duration-200 ease-out"
+              className="h-full origin-left bg-success transition-transform duration-200 ease-out motion-reduce:transition-none"
               style={{ transform: `scaleX(${total === 0 ? 0 : done / total})` }}
             />
           </div>
@@ -104,7 +105,7 @@ export function CourseOutline({ categories, selectedId, completedIds, assistedId
                           <span
                             aria-hidden
                             className={`w-3 shrink-0 text-center ${
-                              assisted ? 'text-fg-muted' : completed ? 'text-success' : selected ? 'text-accent' : 'text-border'
+                              assisted ? 'text-fg-muted' : completed ? 'text-success' : selected ? 'text-accent' : 'text-fg-muted/50'
                             }`}
                           >
                             {completed ? '✓' : selected ? '›' : '·'}
@@ -112,9 +113,7 @@ export function CourseOutline({ categories, selectedId, completedIds, assistedId
                           <span aria-hidden className="flex flex-1 items-baseline gap-2">
                             <span className="flex-1">{splitTitle(exercise.title).name}</span>
                             {splitTitle(exercise.title).keys.map((key) => (
-                              <kbd key={key} className="rounded bg-term-bg px-1 font-mono text-xs text-term-fg">
-                                {key}
-                              </kbd>
+                              <Kbd key={key}>{key}</Kbd>
                             ))}
                           </span>
                           <span className="sr-only">

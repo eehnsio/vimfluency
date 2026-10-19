@@ -29,7 +29,7 @@ export class ErrorBoundary extends Component<Props, State> {
         <button
           type="button"
           onClick={() => window.location.reload()}
-          className="rounded-panel border border-border px-3 py-1 hover:bg-border"
+          className="rounded-panel border border-border px-3 py-1 transition-colors duration-150 hover:bg-border focus-visible:outline-2 focus-visible:outline-accent"
         >
           Reload
         </button>

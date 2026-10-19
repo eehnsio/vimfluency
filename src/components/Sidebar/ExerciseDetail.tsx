@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { displayKeys } from '../../engine/lock'
+import { Code, Kbd } from '../Kbd'
 import type { Exercise } from '../../exercises/types'
 
 interface Props {
@@ -17,9 +18,7 @@ function Inline({ text }: { text: string }) {
     <>
       {text.split(/(`[^`]+`)/).map((part, index) =>
         part.startsWith('`') ? (
-          <code key={index} className="rounded bg-term-bg px-1 font-mono text-[0.9em] text-term-fg">
-            {part.slice(1, -1)}
-          </code>
+          <Code key={index}>{part.slice(1, -1)}</Code>
         ) : (
           part
         ),
@@ -69,7 +68,7 @@ function Hints({ exercise, onSolutionShown, onFocusEditor }: Pick<Props, 'exerci
         )}
         {solutionShown && (
           <p className="text-sm text-fg-muted">
-            Keys: <code className="rounded bg-term-bg px-1.5 py-0.5 font-mono text-term-fg">{exercise.solution}</code>
+            Keys: <Code>{exercise.solution}</Code>
           </p>
         )}
       </div>
@@ -106,9 +105,9 @@ export function ExerciseDetail({ exercise, onReset, onSolutionShown, onFocusEdit
         <h3 className="text-xs font-semibold tracking-wide text-fg-muted uppercase">Keys in play</h3>
         <p className="flex flex-wrap gap-1.5">
           {displayKeys(exercise.solution, exercise.allowedKeys).map((key) => (
-            <kbd key={key} className="min-w-7 rounded border border-border bg-term-bg px-1.5 py-0.5 text-center font-mono text-sm text-term-fg">
+            <Kbd key={key} chip>
               {key}
-            </kbd>
+            </Kbd>
           ))}
         </p>
       </div>
