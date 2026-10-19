@@ -116,7 +116,7 @@ describe('session line numbers', () => {
     expect(numbers()).toEqual(['2', '1', '3', '1'])
   })
 
-  it('turns line numbers off and on with :set', () => {
+  it('turns line numbers off and on with :set, like vim', () => {
     const s = createSession({
       parent: document.body,
       content: 'a\nb',
@@ -125,16 +125,41 @@ describe('session line numbers', () => {
     })
     session = s
     const gutter = () => s.view.dom.querySelector('.cm-lineNumbers')
+    // Första elementet är CodeMirrors osynliga breddmall, inte en rad.
+    const numbers = () =>
+      [...s.view.dom.querySelectorAll('.cm-lineNumbers .cm-gutterElement')].slice(1).map((el) => el.textContent)
     expect(gutter()).not.toBeNull()
     expect(s.getState().options).toEqual({ number: true, relativenumber: true })
 
+    // Bara relativenumber kvar: relativa nummer med 0 på aktuell rad.
     s.sendKeys(':set nonumber<CR>')
-    expect(gutter()).toBeNull()
     expect(s.getState().options.number).toBe(false)
+    expect(numbers()).toEqual(['0', '1'])
+
+    s.sendKeys(':set norelativenumber<CR>')
+    expect(gutter()).toBeNull()
 
     s.sendKeys(':set number<CR>')
     expect(gutter()).not.toBeNull()
-    expect(s.getState().options.number).toBe(true)
+    expect(numbers()).toEqual(['1', '2'])
+  })
+
+  it('starts with the given line numbers and keeps new ones as the reset baseline', () => {
+    const s = createSession({
+      parent: document.body,
+      content: 'a\nb',
+      start: { line: 1, col: 1 },
+      lineNumbers: true,
+      numberOptions: { number: false, relativenumber: false },
+    })
+    session = s
+    expect(s.view.dom.querySelector('.cm-lineNumbers')).toBeNull()
+
+    s.setNumberOptions({ number: true, relativenumber: false })
+    expect(s.getState().options).toEqual({ number: true, relativenumber: false })
+    s.sendKeys(':set nonumber<CR>')
+    s.reset()
+    expect(s.getState().options).toEqual({ number: true, relativenumber: false })
   })
 
   it('restores the line number options and the gutter on reset', () => {

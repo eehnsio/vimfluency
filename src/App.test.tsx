@@ -1,9 +1,23 @@
-import { render, screen, within } from '@testing-library/react'
+import { act, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 import { allExercises, categories, getExercise } from './exercises/registry'
 
 beforeEach(() => localStorage.clear())
+
+/** En riktig `keydown` med `keyCode` till editorn, eller till prompten om den är öppen. */
+function typeInEditor(key: string) {
+  const editor = document.querySelector('.cm-editor')!
+  const input = editor.querySelector('input')
+  const target = input ?? editor.querySelector('.cm-content')!
+  const event = new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true })
+  Object.defineProperty(event, 'keyCode', { value: key === 'Enter' ? 13 : key.toUpperCase().charCodeAt(0) })
+  target.dispatchEvent(event)
+  if (input && key.length === 1) {
+    input.value += key
+    input.dispatchEvent(new Event('input', { bubbles: true }))
+  }
+}
 
 describe('App', () => {
   it('starts on the first exercise', () => {
@@ -12,8 +26,11 @@ describe('App', () => {
     expect(screen.getByRole('heading', { level: 1, name: 'vimfluency' })).toBeInTheDocument()
     const first = allExercises[0]
     expect(screen.getByRole('heading', { level: 2, name: first.title })).toBeInTheDocument()
-    expect(screen.getByRole('button', { name: /Start here 1\/4/ })).toBeInTheDocument()
-    expect(document.querySelector('.cm-goal')).toHaveTextContent('// Goal: move the cursor down three lines.')
+    expect(screen.getByRole('button', { name: /Start here 1\/5/ })).toBeInTheDocument()
+    expect(document.querySelector('.cm-goal')).toHaveTextContent('// Goal: turn on line numbers')
+    // Som i nvim: inga radnummer förrän man slår på dem, och inget val i rubriken än.
+    expect(document.querySelector('.cm-lineNumbers')).toBeNull()
+    expect(screen.queryByRole('combobox', { name: 'Line numbers' })).not.toBeInTheDocument()
   })
 
   it('opens the course closed-by-default drawer, switches exercise and remembers it', async () => {
@@ -91,6 +108,29 @@ describe('App completion flow', () => {
     const next = allExercises[allExercises.indexOf(exercise) + 1]
     expect(screen.getByRole('heading', { level: 2, name: next.title })).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
+  })
+})
+
+describe('App milestones', () => {
+  const finish = async (completed: string[]) => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed, lastId: exercise.id }))
+    const user = userEvent.setup()
+    render(<App />)
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    await user.keyboard(exercise.solution)
+    return screen.findByRole('status')
+  }
+
+  it('celebrates a finished category', async () => {
+    const motions = categories.find((c) => c.exercises.some((e) => e.id === 'word-jumps'))!
+    const others = motions.exercises.map((e) => e.id).filter((id) => id !== 'word-jumps')
+    expect(await finish(others)).toHaveTextContent(`${motions.title} complete`)
+  })
+
+  it('celebrates the whole course, and the last exercise has nowhere to go', async () => {
+    const others = allExercises.map((e) => e.id).filter((id) => id !== 'word-jumps')
+    expect(await finish(others)).toHaveTextContent('Course complete')
   })
 })
 
@@ -176,6 +216,37 @@ describe('App intro shell', () => {
     localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
     render(<App />)
     expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
+  })
+})
+
+describe('App line numbers', () => {
+  it('saves the kind chosen in the intro and uses it in the next exercise', async () => {
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], openedNvim: true }))
+    const user = userEvent.setup()
+    render(<App />)
+    // Pluginets prompt läser `keyCode`, som userEvent inte sätter. Samma knep som i exercises.test.ts.
+    act(() => {
+      for (const key of [...':set relativenumber', 'Enter']) typeInEditor(key)
+    })
+    expect(await screen.findByRole('status')).toHaveTextContent('Exercise complete')
+    expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).numbers).toEqual({ number: false, relativenumber: true })
+
+    await user.keyboard('{Enter}')
+    expect(screen.getByRole('combobox', { name: 'Line numbers' })).toHaveValue('relative')
+  })
+
+  it('switches line numbers from the header without starting the exercise over', async () => {
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id, openedNvim: true }))
+    const user = userEvent.setup()
+    render(<App />)
+    document.querySelector<HTMLElement>('.cm-content')!.focus()
+    await user.keyboard('w')
+    const position = screen.getByText(/^\d+:\d+$/).textContent
+
+    await user.selectOptions(screen.getByRole('combobox', { name: 'Line numbers' }), 'absolute')
+    expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).numbers).toEqual({ number: true, relativenumber: false })
+    expect(screen.getByText(/^\d+:\d+$/).textContent).toBe(position)
   })
 })
 

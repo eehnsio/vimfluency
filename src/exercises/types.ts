@@ -28,6 +28,10 @@ export type Check =
   | { type: 'mode'; mode: Mode }
   /** Ett vim-alternativ (`:set number`) har ett visst värde. */
   | { type: 'option'; name: keyof NumberOptions; value: boolean }
+  /** Radnummer syns, vilken sort som helst (`number` eller `relativenumber`). */
+  | { type: 'numbersShown' }
+  /** Inga radnummer syns (varken `number` eller `relativenumber`). */
+  | { type: 'numbersHidden' }
 
 export interface Exercise {
   id: string
@@ -42,4 +46,11 @@ export interface Exercise {
   solution: string
   /** Extra tangenter (vim-notation) utöver lösningens, t.ex. `u`. Allt annat är låst. */
   allowedKeys?: string
+  /**
+   * Radnummer som övningen alltid startar med. Utan det startar den med
+   * användarens val (`:set number`, `relativenumber` eller båda).
+   */
+  numbers?: NumberOptions
+  /** Radnumren när övningen är klar sparas som användarens val (steget i introt). */
+  savesNumberChoice?: boolean
 }

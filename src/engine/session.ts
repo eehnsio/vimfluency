@@ -15,6 +15,8 @@ export interface SessionOptions {
   extensions?: Extension[]
   /** Visa radnummer och aktiv rad. Styrs av `:set number` och `:set relativenumber`. */
   lineNumbers?: boolean
+  /** Radnumren vid start och efter `reset`. Standard är hybrid (`number relativenumber`). */
+  numberOptions?: NumberOptions
   /**
    * Om satt är bara dessa tangenter (notation som i `parseKeys`) tillåtna från
    * användaren, och mus, klistra in och drag låses. `sendKeys` påverkas inte.
@@ -29,6 +31,8 @@ export interface Session {
   sendKeys(notation: string): void
   getState(): SessionState
   reset(): void
+  /** Byter radnummer direkt och gör dem till det `reset` återställer till. */
+  setNumberOptions(options: NumberOptions): void
   /** Anropas när innehåll, markör, läge eller läge kan ha ändrats. */
   subscribe(listener: () => void): () => void
   destroy(): void
@@ -97,7 +101,7 @@ function requireVim(view: EditorView): VimEditor {
 export function createSession(options: SessionOptions): Session {
   const { content, start, extensions = [] } = options
 
-  const initialNumberOptions: NumberOptions = { number: true, relativenumber: true }
+  const initialNumberOptions: NumberOptions = { ...(options.numberOptions ?? { number: true, relativenumber: true }) }
   const numberOptions: NumberOptions = { ...initialNumberOptions }
   const numbers = new Compartment()
   const listeners = new Set<() => void>()
@@ -166,6 +170,13 @@ export function createSession(options: SessionOptions): Session {
     notify()
   }
 
+  function setNumberOptions(next: NumberOptions) {
+    Object.assign(initialNumberOptions, next)
+    Object.assign(numberOptions, next)
+    applyNumberOptions()
+    notify()
+  }
+
   function subscribe(listener: () => void) {
     listeners.add(listener)
     return () => listeners.delete(listener)
@@ -178,5 +189,5 @@ export function createSession(options: SessionOptions): Session {
     view.destroy()
   }
 
-  return { view, sendKeys, getState, reset, subscribe, destroy }
+  return { view, sendKeys, getState, reset, setNumberOptions, subscribe, destroy }
 }

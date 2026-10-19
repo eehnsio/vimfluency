@@ -30,6 +30,10 @@ function passes(check: Check, state: SessionState, initialContent: string): bool
       return state.mode === check.mode
     case 'option':
       return state.options[check.name] === check.value
+    case 'numbersShown':
+      return state.options.number || state.options.relativenumber
+    case 'numbersHidden':
+      return !state.options.number && !state.options.relativenumber
   }
 }
 

@@ -1,4 +1,5 @@
 import { useCallback, useState } from 'react'
+import type { NumberOptions } from '../exercises/types'
 
 const STORAGE_KEY = 'vimfluency:progress'
 
@@ -9,7 +10,15 @@ interface Stored {
   openedNvim?: boolean
   /** Övningar där lösningen visades. Klarade med hjälp. */
   assisted: string[]
+  /** Radnumren användaren valde i introt eller i rubriken. */
+  numbers?: NumberOptions
 }
+
+const isNumberOptions = (value: unknown): value is NumberOptions =>
+  typeof value === 'object' &&
+  value !== null &&
+  typeof (value as NumberOptions).number === 'boolean' &&
+  typeof (value as NumberOptions).relativenumber === 'boolean'
 
 function load(): Stored {
   try {
@@ -21,6 +30,7 @@ function load(): Stored {
         lastId: typeof parsed.lastId === 'string' ? parsed.lastId : undefined,
         openedNvim: parsed.openedNvim === true,
         assisted: Array.isArray(parsed.assisted) ? parsed.assisted.filter((id) => typeof id === 'string') : [],
+        numbers: isNumberOptions(parsed.numbers) ? parsed.numbers : undefined,
       }
     }
   } catch {
@@ -68,11 +78,18 @@ export function useProgress() {
 
   const openNvim = useCallback(() => update((current) => ({ ...current, openedNvim: true })), [update])
 
+  const setNumbers = useCallback(
+    (numbers: NumberOptions) => update((current) => ({ ...current, numbers: { ...numbers } })),
+    [update],
+  )
+
   return {
     completed: new Set(stored.completed),
     lastId: stored.lastId,
     openedNvim: stored.openedNvim === true,
     assisted: new Set(stored.assisted),
+    numbers: stored.numbers,
+    setNumbers,
     markAssisted,
     markCompleted,
     select,

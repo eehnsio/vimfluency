@@ -5,6 +5,13 @@ import { createExerciseSession } from '../engine/exerciseSession'
 import type { Session } from '../engine/session'
 import { activeContent, goalOf } from './define'
 import { allExercises, categories, getExercise, nextExercise } from './registry'
+import type { NumberOptions } from './types'
+
+const PREFERENCES: [string, NumberOptions][] = [
+  ['hybrid', { number: true, relativenumber: true }],
+  ['absolute', { number: true, relativenumber: false }],
+  ['relative', { number: false, relativenumber: true }],
+]
 
 describe('registry', () => {
   it('has unique exercise ids', () => {
@@ -59,29 +66,33 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
 
   // Sessionen byggs som i appen (låst, med TSX och tema), annars missar testerna
   // fel som bara uppstår med låset på.
-  const open = (onBlocked?: (key: string) => void) => createExerciseSession(exercise, { onBlocked })
+  const open = (onBlocked?: (key: string) => void, numberOptions?: NumberOptions) =>
+    createExerciseSession(exercise, { onBlocked, numberOptions })
   const evaluateNow = (session: Session) =>
     evaluate(exercise.checks, session.getState(), activeContent(exercise))
 
-  it('is not solved at the start', () => {
-    const session = open()
-    expect(evaluateNow(session).passed).toBe(false)
-    session.destroy()
-  })
+  // Användaren väljer radnummer i introt, så varje övning ska gå att lösa med alla val.
+  describe.each(exercise.numbers ? [PREFERENCES[0]] : PREFERENCES)('with %s line numbers', (_name, numbers) => {
+    it('is not solved at the start', () => {
+      const session = open(undefined, numbers)
+      expect(evaluateNow(session).passed).toBe(false)
+      session.destroy()
+    })
 
-  it('is solved by the reference solution', () => {
-    const session = open()
-    session.sendKeys(exercise.solution)
-    expect(evaluateNow(session).failed).toEqual([])
-    session.destroy()
-  })
+    it('is solved by the reference solution', () => {
+      const session = open(undefined, numbers)
+      session.sendKeys(exercise.solution)
+      expect(evaluateNow(session).failed).toEqual([])
+      session.destroy()
+    })
 
-  it('is not solved after solving it and resetting', () => {
-    const session = open()
-    session.sendKeys(exercise.solution)
-    session.reset()
-    expect(evaluateNow(session).passed).toBe(false)
-    session.destroy()
+    it('is not solved after solving it and resetting', () => {
+      const session = open(undefined, numbers)
+      session.sendKeys(exercise.solution)
+      session.reset()
+      expect(evaluateNow(session).passed).toBe(false)
+      session.destroy()
+    })
   })
 
   it('does not use r as a normal-mode command, since r is the emergency exit', () => {
@@ -131,7 +142,7 @@ describe('prompt exercises with real key events', () => {
     }
   }
 
-  it.each([['search-next'], ['replace-current-line'], ['rename-variable']])(
+  it.each([['search-next'], ['replace-current-line'], ['rename-variable'], ['intro-show-numbers']])(
     '%s is solved by typing its keys into the locked prompt',
     (id) => {
       const exercise = getExercise(id)!
@@ -142,4 +153,13 @@ describe('prompt exercises with real key events', () => {
       session.destroy()
     },
   )
+
+  it('intro-show-numbers also accepts relative numbers', () => {
+    const exercise = getExercise('intro-show-numbers')!
+    const session = createExerciseSession(exercise)
+    for (const key of [...':set relativenumber', 'Enter']) typeKey(session, key)
+    expect(session.getState().options).toEqual({ number: false, relativenumber: true })
+    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).failed).toEqual([])
+    session.destroy()
+  })
 })

@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { evaluate, onlyNeedsNormalMode, type SessionState } from '../engine/checks'
-import { createExerciseSession } from '../engine/exerciseSession'
+import { createExerciseSession, startNumbers } from '../engine/exerciseSession'
 import { createOvershootTracker, cursorTarget } from '../engine/overshoot'
 import type { Session } from '../engine/session'
 import { activeContent } from '../exercises/define'
-import type { Exercise } from '../exercises/types'
+import type { Exercise, NumberOptions } from '../exercises/types'
 
-export function useExerciseSession(exercise: Exercise) {
+export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) {
   const containerRef = useRef<HTMLDivElement>(null)
   const sessionRef = useRef<Session | null>(null)
   const [state, setState] = useState<SessionState | null>(null)
@@ -15,6 +15,11 @@ export function useExerciseSession(exercise: Exercise) {
   const [overshot, setOvershot] = useState(false)
 
   const initialContent = activeContent(exercise)
+  // Sessionen byggs inte om när valet ändras (då skulle övningen börja om), se effekten nedan.
+  const numbersRef = useRef(numbers)
+  useEffect(() => {
+    numbersRef.current = numbers
+  })
 
   const clearFeedback = useCallback(() => {
     setCompleted(false)
@@ -37,6 +42,7 @@ export function useExerciseSession(exercise: Exercise) {
       // `r` är låst som alla andra tangenter som inte hör till övningen, men
       // används som nödutgång så att man aldrig fastnar efter att ha missat målet.
       onBlocked: (key) => (key === 'r' ? reset() : setBlockedKey(key)),
+      numberOptions: numbersRef.current,
     })
     sessionRef.current = session
 
@@ -60,6 +66,12 @@ export function useExerciseSession(exercise: Exercise) {
       sessionRef.current = null
     }
   }, [exercise, initialContent, reset, clearFeedback])
+
+  // Nytt val i rubriken gäller direkt, utan att övningen börjar om.
+  useEffect(() => {
+    if (!numbers || exercise.numbers) return
+    sessionRef.current?.setNumberOptions(startNumbers(exercise, numbers))
+  }, [numbers, exercise])
 
   // Texten är rätt men man står kvar i insert/visual: be om Esc.
   const needsEsc = !completed && state !== null && onlyNeedsNormalMode(exercise.checks, state, initialContent)
