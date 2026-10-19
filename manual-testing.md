@@ -12,6 +12,14 @@ Bocka av i en kopia, inte i den här filen.
 - [ ] Webbläsare: Chrome, Safari och Firefox.
 - [ ] Tangentbordslayout: svensk och amerikansk. Se [Tangentbordslayout](#tangentbordslayout).
 
+## Radnummer
+
+- [ ] "Show line numbers" startar utan radnummer. `:set number` ger absoluta, `:set relativenumber` relativa med 0 på aktuell rad.
+- [ ] Valet sparas: nästa övning har samma radnummer, och rubriken visar "Line numbers" med valet.
+- [ ] Byt i rubriken (Absolute, Relative, Both): numren byts direkt, markören står kvar och övningen börjar inte om.
+- [ ] Ladda om: valet finns kvar.
+- [ ] `:set nonumber` med relativa nummer på: de relativa numren står kvar, som i nvim.
+
 ## Introt och skalet
 
 - [ ] Första besöket visar skalet (`zsh` i titelraden), inte editorn.
@@ -62,7 +70,10 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] `r` börjar om samma övning.
 - [ ] Alla andra tangenter gör ingenting och editorn är låst.
 - [ ] Knapparna "Start over" och "Next" fungerar med mus, och med Tab + Enter/mellanslag.
-- [ ] Sista övningen har ingen "Next"-knapp och Enter gör ingenting.
+- [ ] Sista övningen med andra övningar kvar: knappen heter "First unfinished" och Enter går till den första som inte är klar.
+- [ ] Sista klara övningen i en kategori: bannern säger "<Kategori> complete" och "Up next: <nästa kategori>".
+- [ ] Alla 32 klara: bannern säger "Course complete" med `:q`-skämtet, och det finns ingen Next-knapp.
+- [ ] Bannern och bocken glider in kort (under en sekund), och står still med "Reduce motion" påslaget.
 
 ## Lektionen och målet
 
@@ -91,8 +102,10 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 
 ## Terminalfönstret
 
-- [ ] Terminalen startar maximerad.
-- [ ] Gröna knappen växlar till ett mindre, centrerat fönster och tillbaka.
+- [ ] Terminalen startar maximerad men går inte kant i kant: den har marginal, kant och rundade hörn, och ser ut som ett fönster.
+- [ ] Gröna knappen växlar till ett mindre, centrerat fönster och tillbaka. Gula gör fönstret mindre och är avstängd när det redan är litet.
+- [ ] Röda knappen stänger inget, men titelraden säger "In Vim you quit with :q. Not yet, though." i tre sekunder.
+- [ ] Klick på fönsterknapparna tar inte fokus från editorn.
 - [ ] Editorn behåller innehåll och läge när fönstret byter storlek.
 - [ ] Långa filer scrollar och markören hålls synlig vid `G`, `gg` och `:N`.
 - [ ] Smalt webbläsarfönster: inget bryts sönder så att editorn blir oanvändbar.
@@ -103,10 +116,11 @@ Lös varje övning med tangenterna nedan, med riktigt tangentbord. Prova också 
 
 | Kategori | Övning | Tangenter | Kolla särskilt |
 |---|---|---|---|
-| Start here | The numbers on the left | `3j` | Relativa radnummer uppdateras när man flyttar sig |
+| Start here | Show line numbers | `:set number<CR>` eller `:set relativenumber<CR>` | Inga radnummer vid start. Valet syns i rubriken efteråt |
+| | Jump with a count | `3j` | Fungerar med alla tre radnummerval |
 | | Where am I? | `2j4l` | |
 | | Which mode am I in? | `ihello<Esc>` | Kräver Esc innan den klaras |
-| | Everything can be configured | `:set nonumber<CR>` | Radnumren försvinner, och kommer tillbaka efter `r` |
+| | Everything can be configured | `:set nonumber<CR>` och/eller `:set norelativenumber<CR>` | Klaras först när inga nummer syns. Ditt val kommer tillbaka i nästa övning |
 | Basics | Move down and up | `6j` | `j`/`k` följer de synliga raderna |
 | | Move left and right | `17l` | |
 | | Put it together | `2j12l` | |

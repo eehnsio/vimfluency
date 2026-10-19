@@ -8,7 +8,7 @@ Det här dokumentet beskriver vad som är byggt och vad som återstår. Arkitekt
 |---|---|
 | Skal | Vite + React + TypeScript (strict), Tailwind v4 med tokens, Vitest + Testing Library, oxlint |
 | Engine | `keys`, `session`, `checks`, `lock`, `overshoot`, `lineNumbers`, `editorTheme` |
-| Övningar | 9 kategorier, 32 övningar. Varje lösning bevisas av `exercises.test.ts` |
+| Övningar | 9 kategorier, 33 övningar. Varje lösning bevisas av `exercises.test.ts` |
 | UI | Två kolumner: lektion (rubrik med plats och progress, förklaring, tangenter i spel, hintar). Målet står bara på den markerade första raden i editorn och terminalfönster med statusrad och kommandorad. Kurslistan är en låda som börjar stängd |
 | Framsteg | `localStorage` via `useProgress`, bock i kurslistan, senast vald övning kommer ihåg |
 | Hintar | En hint i taget i lektionskolumnen, sedan "Show the keys" som sista utväg (markeras som klarad med hjälp) |
@@ -16,7 +16,7 @@ Det här dokumentet beskriver vad som är byggt och vad som återstår. Arkitekt
 
 Kategorier och övningar:
 
-- **Start here (intro):** fejkat skal med `nvim`, radnummer, position, lägen, `:set nonumber`.
+- **Start here (intro):** fejkat skal med `nvim`, välj radnummer (sparas, byts i rubriken), count med `j`, position, lägen, `:set no…`.
 - **Basics:** `j`/`k`, `h`/`l`, kombinera.
 - **Motions:** `w` med count, `b`, `e`, `^`, `$`.
 - **Navigation:** `G`, `gg`, `:N`, `%`.
