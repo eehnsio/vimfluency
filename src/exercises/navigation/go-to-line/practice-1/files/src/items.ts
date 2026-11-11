@@ -1,4 +1,4 @@
-// Goal: jump to line 8, the line that says `target`.
+// Goal: a review comment points at line 8. Jump to that line, the one that says `target`.
 
 const a = 1
 const b = 2

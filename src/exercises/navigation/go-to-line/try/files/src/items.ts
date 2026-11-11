@@ -1,4 +1,4 @@
-// Goal: jump to line 15, the line that says `answer`.
+// Goal: the build failed on line 15. Jump to that line, the one that says `answer`.
 
 const item1 = 1
 const item2 = 2
