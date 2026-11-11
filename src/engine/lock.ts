@@ -17,19 +17,12 @@ const NAMED_KEYS: Record<string, string> = {
 }
 
 /**
- * Vilka tangenter som är påslagna i en övning: tangenterna i lösningen plus
- * eventuella extra (t.ex. `u` för undo). Är en siffra med får alla siffror
- * användas som count. `<Esc>` är alltid påslagen så att man kan ta sig ur ett läge.
+ * Tangenter som inte är ett tecken ännu: döda tangenter (`^` på svensk layout)
+ * och IME. Tecknet kommer efteråt via composition, så de kan inte prövas här.
  */
-export function deriveAllowedKeys(solution: string, extra = ''): Set<string> {
-  const tokens = [...parseKeys(solution), ...parseKeys(extra)]
-  const allowed = new Set(tokens)
-  allowed.add('<Esc>')
-  if (tokens.some((token) => /^\d$/.test(token))) {
-    for (let digit = 0; digit <= 9; digit++) allowed.add(String(digit))
-  }
-  return allowed
-}
+export const COMPOSING_KEYS = new Set(['Dead', 'Process', 'Unidentified'])
+
+const isDigit = (key: string) => /^\d$/.test(key)
 
 const INSERT_COMMANDS = new Set(['i', 'a', 'I', 'A', 'o', 'O', 'S', 's', 'C'])
 const OPERATORS = new Set(['c', 'd', 'y'])
@@ -56,11 +49,12 @@ export function prettyKey(key: string): string {
 }
 
 /**
- * Lösningens kommandotangenter: det man skriver i insert-läge eller i en
- * `:`/`/`-prompt räknas inte, bara tangenterna som tar en dit och därifrån.
- * Annars stavar "Keys in play" ut svaret bokstav för bokstav.
+ * Kommandotangenterna i en tangentsekvens: det man skriver i insert-läge eller
+ * i en `:`/`/`-prompt räknas inte, bara tangenterna som tar en dit och därifrån.
+ * Låset och "Keys in play" bygger båda på den här listan, så ett `o` i texten
+ * man skriver blir aldrig ett kommando i normalläge.
  */
-function commandKeys(tokens: string[]): string[] {
+export function commandKeys(tokens: string[]): string[] {
   const keys: string[] = []
   let mode: 'normal' | 'visual' | 'insert' | 'prompt' = 'normal'
   let operator: string | null = null
@@ -96,7 +90,7 @@ function commandKeys(tokens: string[]): string[] {
       expect = 'object'
       continue
     }
-    if (/^\d$/.test(token)) continue
+    if (isDigit(token)) continue
     if (operator) {
       // En rörelse (`w`, `$`) eller samma operator igen (`cc`, `dd`).
       if (operator === 'c') mode = 'insert'
@@ -115,6 +109,21 @@ function commandKeys(tokens: string[]): string[] {
   return keys
 }
 
+/**
+ * Tangenterna en lösning lär ut: kommandotangenterna plus extra (t.ex. `O` när
+ * lektionen nämner den). `<Esc>` är alltid med så att man kan ta sig ur ett läge.
+ * Är en siffra med får alla siffror användas som count.
+ */
+export function taughtKeys(solution: string, extra = ''): Set<string> {
+  const keys = [...commandKeys(parseKeys(solution)), ...commandKeys(parseKeys(extra))]
+  const taught = new Set(keys)
+  taught.add('<Esc>')
+  if (keys.some(isDigit)) {
+    for (let digit = 0; digit <= 9; digit++) taught.add(String(digit))
+  }
+  return taught
+}
+
 /** `g` `g` blir `gg` och `d` `d` blir `dd`, som man tänker på dem. */
 function joinDoubled(keys: string[]): string[] {
   const joined: string[] = []
@@ -131,26 +140,30 @@ function joinDoubled(keys: string[]): string[] {
 }
 
 /**
- * Tangenterna man ser i UI:t: lösningens kommandotangenter plus extra. Alla
- * siffror visas som en enda `0-9`, eftersom låset tillåter vilket count som helst.
+ * Tangenterna man ser i UI:t: kommandotangenterna plus extra. Alla siffror
+ * visas som en enda `0-9`, eftersom låset tillåter vilket count som helst.
  */
 export function displayKeys(solution: string, extra = ''): string[] {
-  const keys = [...joinDoubled(commandKeys(parseKeys(solution))), ...parseKeys(extra)]
-    .filter((key) => key !== ' ')
-    .map((key) => (/^\d$/.test(key) ? '0-9' : prettyKey(key)))
+  const keys = joinDoubled([...commandKeys(parseKeys(solution)), ...commandKeys(parseKeys(extra))]).map((key) =>
+    isDigit(key) ? '0-9' : prettyKey(key),
+  )
   return [...new Set(keys)]
 }
 
 /** Sant för tangenter som bara är modifierare och inte skriver eller gör något själva. */
 export const isModifierKey = (event: KeyboardEvent) => MODIFIER_KEYS.has(event.key)
 
+/** AltGr (Windows) kommer som Ctrl+Alt tillsammans med ett vanligt tecken, t.ex. `{` på svensk layout. */
+export const isAltGr = (event: KeyboardEvent) => event.ctrlKey && event.altKey && event.key.length === 1
+
 /**
  * Översätter ett tangentbordsevent till samma notation som `parseKeys`, eller
  * `null` om eventet inte är en editortangent (modifierare, webbläsargenvägar).
+ * Ensam Alt ignoreras (så fungerar `$` och `{` på svensk Mac), liksom AltGr.
  */
 export function keyFromEvent(event: KeyboardEvent): string | null {
   if (event.metaKey || isModifierKey(event)) return null
   if (event.key in NAMED_KEYS) return NAMED_KEYS[event.key]
-  if (event.ctrlKey && event.key.length === 1) return `<C-${event.key.toLowerCase()}>`
+  if (event.ctrlKey && event.key.length === 1 && !isAltGr(event)) return `<C-${event.key.toLowerCase()}>`
   return event.key
 }

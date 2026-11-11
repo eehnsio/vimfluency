@@ -1,26 +1,30 @@
-import { deriveAllowedKeys, displayKeys, keyFromEvent, prettyKey } from './lock'
+import { displayKeys, isAltGr, keyFromEvent, prettyKey, taughtKeys } from './lock'
 
 const key = (init: KeyboardEventInit) => new KeyboardEvent('keydown', init)
 
-describe('deriveAllowedKeys', () => {
-  it('allows the keys in the solution and Esc', () => {
-    const allowed = deriveAllowedKeys('iBig <Esc>')
-    expect([...allowed].sort()).toEqual([' ', '<Esc>', 'B', 'g', 'i'].sort())
+describe('taughtKeys', () => {
+  it('keeps the command keys of the solution and Esc, not the text typed in insert mode', () => {
+    expect([...taughtKeys('iBig <Esc>')].sort()).toEqual(['<Esc>', 'i'].sort())
+    expect([...taughtKeys('cwWorld<Esc>')].sort()).toEqual(['<Esc>', 'c', 'w'].sort())
+  })
+
+  it('keeps only the keys around a prompt, not what is typed in it', () => {
+    expect([...taughtKeys(':set number<CR>', ':set relativenumber<CR>')].sort()).toEqual(['<CR>', '<Esc>', ':'].sort())
   })
 
   it('allows every digit as a count when the solution has one', () => {
-    const allowed = deriveAllowedKeys('4w')
-    expect(allowed.has('7')).toBe(true)
-    expect(allowed.has('w')).toBe(true)
-    expect(allowed.has('b')).toBe(false)
+    const taught = taughtKeys('4w')
+    expect(taught.has('7')).toBe(true)
+    expect(taught.has('w')).toBe(true)
+    expect(taught.has('b')).toBe(false)
   })
 
   it('does not allow digits when the solution has none', () => {
-    expect(deriveAllowedKeys('%').has('3')).toBe(false)
+    expect(taughtKeys('%').has('3')).toBe(false)
   })
 
-  it('adds extra keys', () => {
-    expect(deriveAllowedKeys('cwWorld<Esc>', 'u').has('u')).toBe(true)
+  it('adds extra command keys', () => {
+    expect(taughtKeys('cwWorld<Esc>', 'u').has('u')).toBe(true)
   })
 })
 
@@ -73,8 +77,16 @@ describe('keyFromEvent', () => {
     expect(keyFromEvent(key({ key: 'r', metaKey: true }))).toBeNull()
   })
 
-  it('passes dead keys through so they can be blocked', () => {
+  it('names dead keys so the lock can let them through to the plugin', () => {
     expect(keyFromEvent(key({ key: 'Dead' }))).toBe('Dead')
+  })
+
+  it('reads AltGr (Ctrl+Alt on Windows) and a lone Alt (Mac) as the plain character', () => {
+    const altGr = key({ key: '{', ctrlKey: true, altKey: true })
+    expect(isAltGr(altGr)).toBe(true)
+    expect(keyFromEvent(altGr)).toBe('{')
+    expect(keyFromEvent(key({ key: '$', altKey: true }))).toBe('$')
+    expect(isAltGr(key({ key: 'd', ctrlKey: true }))).toBe(false)
   })
 })
 

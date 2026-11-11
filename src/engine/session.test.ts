@@ -1,3 +1,4 @@
+import { EditorView } from '@codemirror/view'
 import { createSession, type Session } from './session'
 
 let session: Session | undefined
@@ -40,6 +41,14 @@ describe('session', () => {
     const s = open('foo\nbar\nbaz')
     s.sendKeys('/baz<CR>')
     expect(s.getState().cursor).toEqual({ line: 3, col: 1 })
+  })
+
+  it('changes inside parentheses with ci( and its alias cib', () => {
+    const s = open('call(a, b)', 1, 6)
+    s.sendKeys('ci(x<Esc>')
+    expect(s.getState().content).toBe('call(x)')
+    s.sendKeys('cibyy<Esc>')
+    expect(s.getState().content).toBe('call(yy)')
   })
 
   it('combines an operator with a search motion', () => {
@@ -248,6 +257,48 @@ describe('session lock', () => {
     expect(onBlocked).not.toHaveBeenCalled()
   })
 
+  it('types any text in insert mode and in prompts, since the lock is about commands', () => {
+    const { s, onBlocked } = locked('abc', ['i', ':'])
+    press(s.view.contentDOM, { key: 'i' })
+    for (const key of ['x', 'Z', '{', ' ', 'Enter']) expect(press(s.view.contentDOM, { key }).defaultPrevented).toBe(false)
+    // Ctrl-kombinationer och Tab följer låset även i insert-läge.
+    press(s.view.contentDOM, { key: 'w', ctrlKey: true })
+    expect(onBlocked).toHaveBeenCalledWith('<C-w>')
+    onBlocked.mockClear()
+
+    s.sendKeys('<Esc>:')
+    const input = s.view.dom.querySelector('input')!
+    for (const key of ['x', '%', 'Enter']) press(input, { key })
+    expect(onBlocked).not.toHaveBeenCalled()
+  })
+
+  it('lets dead keys reach the plugin and locks the composed character in normal mode', () => {
+    // `^` på svensk layout: keydown säger bara "Dead", tecknet kommer via composition.
+    const { s, onBlocked } = locked('  abc', ['^'])
+    expect(press(s.view.contentDOM, { key: 'Dead' }).defaultPrevented).toBe(false)
+    expect(onBlocked).not.toHaveBeenCalled()
+
+    // Vårt lås ligger först bland inputHandlers och prövar det sammansatta tecknet.
+    const [textLock] = s.view.state.facet(EditorView.inputHandler)
+    const insert = () => s.view.state.update()
+    expect(textLock(s.view, 0, 0, '^', insert)).toBe(false) // upplåst: pluginet tar den
+    expect(textLock(s.view, 0, 0, '~', insert)).toBe(true) // låst: hanterad utan ändring
+    expect(onBlocked).toHaveBeenCalledWith('~')
+    expect(s.getState().content).toBe('  abc')
+
+    // I insert-läge är tecknet text och går igenom.
+    s.sendKeys('i')
+    expect(textLock(s.view, 0, 0, '~', insert)).toBe(false)
+  })
+
+  it('feeds AltGr characters (Ctrl+Alt on Windows) to vim itself', () => {
+    const { s, onBlocked } = locked('foo bar', ['$'])
+    const event = press(s.view.contentDOM, { key: '$', ctrlKey: true, altKey: true })
+    expect(event.defaultPrevented).toBe(true)
+    expect(onBlocked).not.toHaveBeenCalled()
+    expect(s.getState().cursor.col).toBe(7)
+  })
+
   it('lets Tab move focus out of the editor in normal mode, without reaching vim', () => {
     const { s, onBlocked } = locked('abc', ['i'])
     for (const shiftKey of [false, true]) {
@@ -324,7 +375,7 @@ describe('session lock', () => {
   })
 
   it('closes an open prompt on reset', () => {
-    // `<Esc>` är alltid tillåten i appen (`deriveAllowedKeys`), och reset stänger prompten med den.
+    // `<Esc>` är alltid tillåten i appen (`taughtKeys`), och reset stänger prompten med den.
     const { s } = locked('hello', [':', '<Esc>'])
     s.sendKeys(':')
     expect(s.view.dom.querySelector('input')).not.toBeNull()

@@ -5,7 +5,7 @@ import type { SessionState } from './checks'
 import { parseKeys } from './keys'
 import { lineNumberExtension } from './lineNumbers'
 import type { NumberOptions } from '../exercises/types'
-import { closePrompt, createKeyLock, feedKey, vimMode, type VimEditor } from './vimInput'
+import { closePrompt, createKeyLock, createTextLock, feedKey, vimMode, type VimEditor } from './vimInput'
 
 export interface SessionOptions {
   parent?: HTMLElement
@@ -18,8 +18,9 @@ export interface SessionOptions {
   /** Radnumren vid start och efter `reset`. Standard är hybrid (`number relativenumber`). */
   numberOptions?: NumberOptions
   /**
-   * Om satt är bara dessa tangenter (notation som i `parseKeys`) tillåtna från
-   * användaren, och mus, klistra in och drag låses. `sendKeys` påverkas inte.
+   * Om satt är bara dessa tangenter (notation som i `parseKeys`) tillåtna som
+   * kommandon från användaren, och mus, klistra in och drag låses. Text i
+   * insert-läge och prompter är fri. `sendKeys` påverkas inte.
    */
   allowedKeys?: ReadonlySet<string>
   /** Anropas med tangenten när en låst tangent trycks. */
@@ -113,7 +114,7 @@ export function createSession(options: SessionOptions): Session {
       extensions: [
         vim(),
         EditorView.updateListener.of(notify),
-        ...(options.allowedKeys ? [lockedInput] : []),
+        ...(options.allowedKeys ? [lockedInput, createTextLock(options.allowedKeys, options.onBlocked)] : []),
         numbers.of(options.lineNumbers ? lineNumberExtension(numberOptions) : []),
         ...extensions,
       ],
