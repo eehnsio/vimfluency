@@ -113,13 +113,16 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 ## Lektionen, Watch it och det kumulativa låset
 
 - [ ] Första övningen i en lektion heter "Try it" och har "▶ Watch it". Praktikövningarna heter "Practice 1 of 2" och saknar knappen.
-- [ ] "Watch it": lösningen spelas upp tangent för tangent, statusraden visar "Watch: …", knappen säger "Watching…", inga tangenter gör något, och övningen börjar om efteråt utan bock. Hintarna står kvar.
+- [ ] "Watch it": lösningen spelas upp tangent för tangent, statusraden visar "Watch: …", knappen säger "Watching…", inga tangenter gör något i editorn, och övningen börjar om efteråt utan bock. Hintarna står kvar.
+- [ ] "Watch it" i en övning med prompt ("Go to a line", första introövningen): kommandot skrivs i prompten, Enter kör det och markören flyttar sig eller radnumren visas.
+- [ ] Medan "Watch it" spelar: `r` avbryter och börjar om, Tab flyttar fokus ut ur editorn, och "Start over" går att nå och trycka med tangentbordet.
+- [ ] `u` ångrar: i "Modes", skriv `ihello` + Esc och tryck `u`, texten försvinner. Efter `r` gör `u` ingenting. Cmd/Ctrl+Z gör ingenting.
 - [ ] Under "Keys in play" står "Everything from earlier lessons works too" (inte i första lektionen). Prova en tidigare tangent (t.ex. `j` i "Jump between words"): den fungerar. Prova en senare (t.ex. `b`): "is locked here".
 - [ ] Bokstäver ur texten man ska skriva gör inget i normalläge: `w`, `o`, `l` i "Change a word", mellanslag i "Insert text", Enter i "Search". Alla ger "is locked here".
 - [ ] I insert-läge och i `:`/`/`-prompten går det att skriva vad som helst, även tecken utanför lösningen, och sudda med Backspace.
 - [ ] Caps Lock på och `j`: "J is locked here. Caps Lock on?".
 - [ ] Gå förbi målet: "You went past the target. Move back, or press r to start over." Gå tillbaka med `k`/`h` när de är upplåsta: övningen klaras ändå.
-- [ ] Klar lektion med flera övningar: bannern säger "Lesson complete" och "Up next: <nästa lektion>".
+- [ ] Klar lektion med flera övningar: bannern säger "Lesson complete" och "Up next: <nästa lektion>". Gör om den guidade övningen i en klar lektion: "Lesson complete" utan "Up next", och Enter går till lektionens praktik.
 - [ ] Kurslistan visar lektioner med tangentchips, "1/3" på en delvis klar lektion, och öppnar första oklara övningen i lektionen.
 
 ## Varje övning
