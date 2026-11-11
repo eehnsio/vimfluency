@@ -1,4 +1,4 @@
-// Goal: put the cursor on the second `return` in the file.
+// Goal: put the cursor on the first word in the body of `save`.
 
 function load() {
   return fetchAll()

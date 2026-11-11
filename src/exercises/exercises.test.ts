@@ -156,6 +156,21 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
     expect(goalOf(exercise)).toBeTruthy()
   })
 
+  it('keeps its goal line out of its own searches', () => {
+    // `/mönster` och `:%s/mönster/` söker i hela filen, så en träff på målraden
+    // flyttar "andra träffen" och `N` hamnar på målet. Skiftläge som i pluginet (smartcase).
+    const substitutes = /:%?s\/.*?<CR>/g
+    const patterns = [
+      ...[...exercise.solution.replace(substitutes, '').matchAll(/[/?]([^<]+)<CR>/g)].map(([, pattern]) => pattern),
+      ...[...exercise.solution.matchAll(/:%s\/([^/]+)\//g)].map(([, pattern]) => pattern),
+    ]
+    const goalLine = lines()[0]
+    const found = patterns.filter((pattern) =>
+      /[A-Z]/.test(pattern) ? goalLine.includes(pattern) : goalLine.toLowerCase().includes(pattern),
+    )
+    expect(found).toEqual([])
+  })
+
   // Sessionen byggs som i appen (låst, med TSX och tema), annars missar testerna
   // fel som bara uppstår med låset på.
   const open = (onBlocked?: (key: string) => void, numberOptions?: NumberOptions) =>

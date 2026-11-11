@@ -7,7 +7,7 @@ const lesson: Lesson = {
   id: 'word-back',
   title: 'Back one word: b',
   instructions:
-    'The cursor starts on `shipping`. `b` jumps back to the start of the previous word.',
+    '`b` jumps back to the start of the previous word. A count in front repeats it, as with `w`.',
   exercises: [tryIt, practice1, practice2],
 }
 

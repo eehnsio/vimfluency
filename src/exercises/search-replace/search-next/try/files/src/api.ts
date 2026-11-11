@@ -1,4 +1,4 @@
-// Goal: put the cursor on the third NOTE comment below.
+// Goal: put the cursor on the third note comment below.
 
 function load() {
   // NOTE: cache this
