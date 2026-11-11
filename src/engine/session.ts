@@ -1,3 +1,4 @@
+import { history } from '@codemirror/commands'
 import { Compartment, EditorState, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM, vim } from '@replit/codemirror-vim'
@@ -56,8 +57,8 @@ defineToggle('relativenumber', ['rnu'])
 /**
  * Inmatningssätt som aldrig är tangenttryck. `input.type.compose` får inte stå
  * här: pluginet skickar alla sina egna redigeringar (`d`, `c`, `x`, `p`…) med
- * den, och de skulle då kastas tyst. Komposition stoppas i stället av att
- * `keydown` för IME-tangenter (`Process`) inte är tillåten.
+ * den, och de skulle då kastas tyst. Text från komposition (döda tangenter,
+ * IME) prövas i stället i `createTextLock`.
  */
 const BLOCKED_USER_EVENTS = ['input.paste', 'input.drop', 'delete.cut', 'delete.dragged']
 
@@ -83,6 +84,8 @@ const lockedInput: Extension = [
     drop: block,
     paste: block,
     cut: block,
+    // Cmd/Ctrl+Z och webbläsarens meny: ångra görs med `u`, när lektionen lärt ut den.
+    beforeinput: (event) => (event.inputType === 'historyUndo' || event.inputType === 'historyRedo') && block(event),
   }),
   EditorState.transactionFilter.of((transaction) =>
     BLOCKED_USER_EVENTS.some((event) => transaction.isUserEvent(event)) ? [] : transaction,
@@ -105,6 +108,10 @@ export function createSession(options: SessionOptions): Session {
   const initialNumberOptions: NumberOptions = { ...(options.numberOptions ?? { number: true, relativenumber: true }) }
   const numberOptions: NumberOptions = { ...initialNumberOptions }
   const numbers = new Compartment()
+  // Ångra-historiken som `u` använder. Den ligger i en egen del så att `reset` kan tömma den.
+  // Text man skriver i ett svep i insert-läge är ett steg, hur långsamt man än skriver.
+  const undoHistory = new Compartment()
+  const emptyHistory = () => history({ newGroupDelay: Infinity })
   const listeners = new Set<() => void>()
   const notify = () => listeners.forEach((listener) => listener())
 
@@ -114,7 +121,9 @@ export function createSession(options: SessionOptions): Session {
       extensions: [
         vim(),
         EditorView.updateListener.of(notify),
+        // Låset står före historiken, så att det hinner stoppa webbläsarens egna ångra.
         ...(options.allowedKeys ? [lockedInput, createTextLock(options.allowedKeys, options.onBlocked)] : []),
+        undoHistory.of(emptyHistory()),
         numbers.of(options.lineNumbers ? lineNumberExtension(numberOptions) : []),
         ...extensions,
       ],
@@ -165,6 +174,9 @@ export function createSession(options: SessionOptions): Session {
     closePrompt(view)
     view.dispatch({ changes: { from: 0, to: view.state.doc.length, insert: content } })
     Vim.handleKey(cm, '<Esc>', 'user')
+    // En omstart går inte att ångra: historiken tas bort och läggs tillbaka tom.
+    view.dispatch({ effects: undoHistory.reconfigure([]) })
+    view.dispatch({ effects: undoHistory.reconfigure(emptyHistory()) })
     Object.assign(numberOptions, initialNumberOptions)
     applyNumberOptions()
     placeCursor()

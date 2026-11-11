@@ -238,6 +238,20 @@ describe.each(allExercises.map((exercise) => [exercise.id, exercise] as const))(
   })
 })
 
+describe('intro-modes', () => {
+  it('teaches u, which undoes what was typed', () => {
+    const exercise = getExercise('intro-modes')!
+    const blocked: string[] = []
+    const session = createExerciseSession(exercise, { onBlocked: (key) => blocked.push(key) })
+    type(session, exercise.solution)
+    expect(session.getState().content).not.toBe(activeContent(exercise))
+    type(session, 'u')
+    expect(blocked).toEqual([])
+    expect(session.getState().content).toBe(activeContent(exercise))
+    session.destroy()
+  })
+})
+
 describe('intro-show-numbers', () => {
   it('also accepts relative numbers, typed through the lock', () => {
     const exercise = getExercise('intro-show-numbers')!

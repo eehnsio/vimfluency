@@ -93,6 +93,57 @@ describe('session', () => {
   })
 })
 
+describe('session undo', () => {
+  it('undoes the last change with u, one command at a time', () => {
+    const s = open('one two\nthree')
+    s.sendKeys('x')
+    s.sendKeys('dd')
+    expect(s.getState().content).toBe('three')
+    s.sendKeys('u')
+    expect(s.getState().content).toBe('ne two\nthree')
+    s.sendKeys('u')
+    expect(s.getState().content).toBe('one two\nthree')
+    // Det finns inget kvar att ångra.
+    s.sendKeys('u')
+    expect(s.getState()).toMatchObject({ content: 'one two\nthree', mode: 'normal' })
+  })
+
+  it('undoes everything typed in one insert as a single step, however slowly it was typed', () => {
+    vi.useFakeTimers()
+    const s = open('world')
+    s.sendKeys('i')
+    for (const key of ['h', 'e', 'y', '<BS>', 'j', ' ']) {
+      s.sendKeys(key)
+      vi.advanceTimersByTime(5000)
+    }
+    s.sendKeys('<Esc>')
+    expect(s.getState().content).toBe('hej world')
+    s.sendKeys('u')
+    expect(s.getState().content).toBe('world')
+    vi.useRealTimers()
+  })
+
+  it('undoes a change command in two steps: the typed text, then the deletion', () => {
+    const s = open('one two')
+    s.sendKeys('cwfoo<Esc>')
+    s.sendKeys('u')
+    expect(s.getState().content).toBe(' two')
+    s.sendKeys('u')
+    expect(s.getState().content).toBe('one two')
+  })
+
+  it('cannot undo past a reset', () => {
+    const s = open('one two')
+    s.sendKeys('dw')
+    s.reset()
+    s.sendKeys('u')
+    expect(s.getState()).toMatchObject({ content: 'one two', cursor: { line: 1, col: 1 } })
+    s.sendKeys('x')
+    s.sendKeys('u')
+    expect(s.getState().content).toBe('one two')
+  })
+})
+
 describe('session subscribe', () => {
   it('notifies after keys are sent and stops after unsubscribe', () => {
     const s = open('abc')
@@ -328,6 +379,17 @@ describe('session lock', () => {
     const paste = new Event('paste', { bubbles: true, cancelable: true })
     s.view.contentDOM.dispatchEvent(paste)
     expect(paste.defaultPrevented).toBe(true)
+  })
+
+  it("blocks the browser's own undo and redo (Cmd/Ctrl+Z), so undo stays a vim command", () => {
+    const { s } = locked('abc', ['x'])
+    s.sendKeys('x')
+    for (const inputType of ['historyUndo', 'historyRedo']) {
+      const event = new InputEvent('beforeinput', { inputType, bubbles: true, cancelable: true })
+      s.view.contentDOM.dispatchEvent(event)
+      expect(event.defaultPrevented).toBe(true)
+    }
+    expect(s.getState().content).toBe('bc')
   })
 
   it('rejects pasted, dropped and cut text even when the DOM events are bypassed', () => {
