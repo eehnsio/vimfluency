@@ -268,6 +268,17 @@ describe('intro-modes', () => {
 })
 
 describe('intro-show-numbers', () => {
+  it('also accepts both kinds in one command, typed through the lock', () => {
+    const exercise = getExercise('intro-show-numbers')!
+    const blocked: string[] = []
+    const session = createExerciseSession(exercise, { onBlocked: (key) => blocked.push(key) })
+    type(session, ':set number relativenumber<CR>')
+    expect(blocked).toEqual([])
+    expect(session.getState().options).toEqual({ number: true, relativenumber: true })
+    expect(evaluate(exercise.checks, session.getState(), activeContent(exercise)).failed).toEqual([])
+    session.destroy()
+  })
+
   it('also accepts relative numbers, typed through the lock', () => {
     const exercise = getExercise('intro-show-numbers')!
     const blocked: string[] = []

@@ -176,6 +176,26 @@ describe('session line numbers', () => {
     expect(numbers()).toEqual(['2', '1', '3', '1'])
   })
 
+  it('sets several options in one :set, like vim', () => {
+    const s = createSession({
+      parent: document.body,
+      content: 'a\nb\nc',
+      start: { line: 1, col: 1 },
+      lineNumbers: true,
+      numberOptions: { number: false, relativenumber: false },
+    })
+    session = s
+    s.sendKeys(':set number relativenumber<CR>')
+    expect(s.getState().options).toEqual({ number: true, relativenumber: true })
+    s.sendKeys(':se nonu nornu<CR>')
+    expect(s.getState().options).toEqual({ number: false, relativenumber: false })
+    // Ett alternativ åt gången, och de andra set-kommandona, fungerar som förut.
+    s.sendKeys(':set rnu<CR>')
+    expect(s.getState().options).toEqual({ number: false, relativenumber: true })
+    s.sendKeys(':setlocal nu<CR>')
+    expect(s.getState().options).toEqual({ number: true, relativenumber: true })
+  })
+
   it('turns line numbers off and on with :set, like vim', () => {
     const s = createSession({
       parent: document.body,

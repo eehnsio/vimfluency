@@ -55,6 +55,23 @@ defineToggle('number', ['nu'])
 defineToggle('relativenumber', ['rnu'])
 
 /**
+ * Pluginets `:set` läser bara det första alternativet. Som i vim ska
+ * `:set number relativenumber` sätta båda, så varje alternativ skickas för sig
+ * till pluginets egen `set` (felmeddelanden och `?` fungerar som förut).
+ * Kommandot heter `setall` men ligger på prefixet `se`: `:set` och `:se` hamnar
+ * här, och pluginets `set` finns kvar att anropa via `this`.
+ */
+type ExParams = Parameters<Parameters<typeof Vim.defineEx>[2]>[1]
+interface PluginExCommands {
+  set(cm: object, params: ExParams): void
+}
+Vim.defineEx('setall', 'se', function (this: PluginExCommands, cm, params) {
+  const args = params.args ?? []
+  if (args.length < 2) return this.set(cm, params)
+  for (const arg of args) this.set(cm, { ...params, args: [arg] })
+})
+
+/**
  * Inmatningssätt som aldrig är tangenttryck. `input.type.compose` får inte stå
  * här: pluginet skickar alla sina egna redigeringar (`d`, `c`, `x`, `p`…) med
  * den, och de skulle då kastas tyst. Text från komposition (döda tangenter,

@@ -14,7 +14,7 @@ Bocka av i en kopia, inte i den här filen.
 
 ## Radnummer
 
-- [ ] "Show line numbers" startar utan radnummer. `:set number` ger absoluta, `:set relativenumber` relativa med 0 på aktuell rad.
+- [ ] "Show line numbers" startar utan radnummer. `:set number` ger absoluta, `:set relativenumber` relativa med 0 på aktuell rad. `:set number relativenumber` ger båda, och valet i rubriken visar "Both" efteråt.
 - [ ] Valet sparas: nästa övning har samma radnummer, och rubriken visar "Line numbers" med valet.
 - [ ] Byt i rubriken (Absolute, Relative, Both): numren byts direkt, markören står kvar och övningen börjar inte om.
 - [ ] Ladda om: valet finns kvar.

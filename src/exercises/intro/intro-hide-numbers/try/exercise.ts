@@ -4,8 +4,8 @@ export default defineExercise(
   {
     id: 'intro-hide-numbers',
     hints: [
-      'Turn off each kind you have on. With both absolute and relative numbers, that is two commands.',
-      'Type `:set nonumber` and press Enter. If numbers still show, also type `:set norelativenumber`.',
+      'Turn off each kind you have on. With both absolute and relative numbers, that is two options.',
+      'Type `:set nonumber` and press Enter. If numbers still show, also type `:set norelativenumber`. Both fit in one command: `:set nonumber norelativenumber`.',
     ],
     activeFile: 'src/App.tsx',
     start: { line: 3, col: 1 },
