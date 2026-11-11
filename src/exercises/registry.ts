@@ -7,12 +7,18 @@ import { navigation } from './navigation'
 import { refactoring } from './refactoring'
 import { searchReplace } from './search-replace'
 import { visual } from './visual'
-import type { Category, Exercise } from './types'
+import type { Category, Exercise, Lesson } from './types'
 
 /** Ordningen här är kategoriordningen i UI:t. */
 export const categories: Category[] = [intro, basics, motions, navigation, editing, searchReplace, refactoring, deleting, visual]
 
-export const allExercises: Exercise[] = categories.flatMap((category) => category.exercises)
+export const allLessons: Lesson[] = categories.flatMap((category) => category.lessons)
+
+export const allExercises: Exercise[] = allLessons.flatMap((lesson) => lesson.exercises)
+
+const lessonByExercise = new Map<string, Lesson>(
+  allLessons.flatMap((lesson) => lesson.exercises.map((exercise) => [exercise.id, lesson] as const)),
+)
 
 export function getExercise(id: string): Exercise | undefined {
   return allExercises.find((exercise) => exercise.id === id)
@@ -21,4 +27,13 @@ export function getExercise(id: string): Exercise | undefined {
 export function nextExercise(id: string): Exercise | undefined {
   const index = allExercises.findIndex((exercise) => exercise.id === id)
   return index === -1 ? undefined : allExercises[index + 1]
+}
+
+/** Lektionen övningen hör till, eller `undefined` för en övning utanför kursen. */
+export function lessonOf(exercise: Exercise): Lesson | undefined {
+  return lessonByExercise.get(exercise.id)
+}
+
+export function categoryOf(lesson: Lesson): Category | undefined {
+  return categories.find((category) => category.lessons.includes(lesson))
 }

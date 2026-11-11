@@ -3,7 +3,7 @@ import { activeContent } from '../exercises/define'
 import type { Exercise, NumberOptions } from '../exercises/types'
 import { editorTheme } from './editorTheme'
 import { goalLine } from './goalLine'
-import { deriveAllowedKeys } from './lock'
+import { unlockedKeys } from './curriculum'
 import { createSession, type Session } from './session'
 
 interface ExerciseSessionOptions {
@@ -23,8 +23,8 @@ export function startNumbers(exercise: Exercise, preference: NumberOptions = DEF
 }
 
 /**
- * Sessionen precis som användaren möter den: låst till övningens tangenter, med
- * TSX-färgning, tema, markerad målrad och radnummer. UI:t och övningstesterna bygger båda på den,
+ * Sessionen precis som användaren möter den: låst till det som lärts ut hittills,
+ * med TSX-färgning, tema, markerad målrad och radnummer. UI:t och övningstesterna bygger båda på den,
  * så ett test bevisar samma beteende som i webbläsaren.
  */
 export function createExerciseSession(exercise: Exercise, options: ExerciseSessionOptions = {}): Session {
@@ -35,7 +35,7 @@ export function createExerciseSession(exercise: Exercise, options: ExerciseSessi
     extensions: [javascript({ jsx: true, typescript: true }), editorTheme, goalLine],
     lineNumbers: true,
     numberOptions: startNumbers(exercise, options.numberOptions),
-    allowedKeys: deriveAllowedKeys(exercise.solution, exercise.allowedKeys),
+    allowedKeys: unlockedKeys(exercise),
     onBlocked: options.onBlocked,
   })
 }
