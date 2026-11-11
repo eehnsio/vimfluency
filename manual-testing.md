@@ -120,6 +120,9 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] Under "Keys in play" står "Everything from earlier lessons works too" (inte i första lektionen). Prova en tidigare tangent (t.ex. `j` i "Jump between words"): den fungerar. Prova en senare (t.ex. `b`): "is locked here".
 - [ ] Bokstäver ur texten man ska skriva gör inget i normalläge: `w`, `o`, `l` i "Change a word", mellanslag i "Insert text", Enter i "Search". Alla ger "is locked here".
 - [ ] I insert-läge och i `:`/`/`-prompten går det att skriva vad som helst, även tecken utanför lösningen, och sudda med Backspace.
+- [ ] "Find a character": `f` följt av vilket tecken som helst fungerar (`fm`, `fr`), och `r` direkt efter `f` startar inte om övningen. Samma tecken utan `f` framför ger "is locked here".
+- [ ] "Change inside parentheses": `ci(` fungerar, `ciw` ger "w is locked here" och Esc avbryter. `(` ensam i normalläge är låst.
+- [ ] `:normal dd` och `:nmap j dd` i valfri övning: ingenting händer och statusraden säger att kommandot är låst. `j` fungerar som vanligt efteråt.
 - [ ] Caps Lock på och `j`: "J is locked here. Caps Lock on?".
 - [ ] Gå förbi målet: "You went past the target. Move back, or press r to start over." Gå tillbaka med `k`/`h` när de är upplåsta: övningen klaras ändå.
 - [ ] Klar lektion med flera övningar: bannern säger "Lesson complete" och "Up next: <nästa lektion>". Gör om den guidade övningen i en klar lektion: "Lesson complete" utan "Up next", och Enter går till lektionens praktik.
