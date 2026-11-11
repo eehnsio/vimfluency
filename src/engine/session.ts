@@ -21,7 +21,8 @@ export interface SessionOptions {
   /**
    * Om satt är bara dessa tangenter (notation som i `parseKeys`) tillåtna som
    * kommandon från användaren, och mus, klistra in och drag låses. Text i
-   * insert-läge och prompter är fri. `sendKeys` påverkas inte.
+   * insert-läge och prompter är fri, utom ex-kommandon som går runt låset
+   * (`:normal`, mappningar). `sendKeys` påverkas inte av tangentlåset.
    */
   allowedKeys?: ReadonlySet<string>
   /** Anropas med tangenten när en låst tangent trycks. */
@@ -62,14 +63,47 @@ defineToggle('relativenumber', ['rnu'])
  * här, och pluginets `set` finns kvar att anropa via `this`.
  */
 type ExParams = Parameters<Parameters<typeof Vim.defineEx>[2]>[1]
-interface PluginExCommands {
-  set(cm: object, params: ExParams): void
-}
+type PluginExCommands = Record<string, (cm: object, params: ExParams) => void>
 Vim.defineEx('setall', 'se', function (this: PluginExCommands, cm, params) {
   const args = params.args ?? []
   if (args.length < 2) return this.set(cm, params)
   for (const arg of args) this.set(cm, { ...params, args: [arg] })
 })
+
+/**
+ * Ex-kommandon som går runt låset: `:normal` kör vilka tangenter som helst, och
+ * en mappning (`:nmap j dd`) är global i pluginet, så den överlever `reset` och
+ * följer med till nästa övning. I en låst session gör de ingenting och anmäls
+ * som låsta, även inuti `:g/…/normal …`. Samma grepp som för `:set`: kommandot
+ * läggs på pluginets prefix och anropar originalet när sessionen inte är låst.
+ */
+const GUARDED_EX: [name: string, prefix?: string][] = [
+  ['normal', 'norm'],
+  ['map'],
+  ['imap', 'im'],
+  ['nmap', 'nm'],
+  ['vmap', 'vm'],
+  ['omap', 'om'],
+  ['noremap', 'no'],
+  ['nnoremap', 'nn'],
+  ['vnoremap', 'vn'],
+  ['inoremap', 'ino'],
+  ['onoremap', 'ono'],
+  ['unmap'],
+  ['mapclear', 'mapc'],
+  ['nmapclear', 'nmapc'],
+  ['vmapclear', 'vmapc'],
+  ['imapclear', 'imapc'],
+  ['omapclear', 'omapc'],
+]
+const exGuards = new WeakMap<object, (command: string) => void>()
+for (const [name, prefix = name] of GUARDED_EX) {
+  Vim.defineEx(`${name}locked`, prefix, function (this: PluginExCommands, cm, params) {
+    const onBlocked = exGuards.get(cm)
+    if (onBlocked) onBlocked(`:${name}`)
+    else this[name](cm, params)
+  })
+}
 
 /**
  * Inmatningssätt som aldrig är tangenttryck. `input.type.compose` får inte stå
@@ -159,6 +193,7 @@ export function createSession(options: SessionOptions): Session {
     notify()
   })
   const { allowedKeys, onBlocked } = options
+  if (allowedKeys) exGuards.set(cm, (command) => onBlocked?.(command))
   const onLockedKeyDown = allowedKeys && createKeyLock({ view, cm, allowedKeys, onBlocked })
   if (onLockedKeyDown) view.dom.addEventListener('keydown', onLockedKeyDown, true)
   // keyup kommer efter att pluginet hanterat tangenten, så läget är uppdaterat.

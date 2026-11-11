@@ -415,6 +415,31 @@ describe('session lock', () => {
     expect(onBlocked).toHaveBeenCalledWith('(')
   })
 
+  it('locks ex commands that run keys or remap them, also inside :g', () => {
+    const { s, onBlocked } = locked('one\ntwo', [':', 'j'])
+    for (const command of [':normal x', ':norm dd', ':nmap j dd', ':noremap j dd', ':g/o/normal x', ':mapclear']) {
+      s.sendKeys(`${command}<CR>`)
+    }
+    expect(onBlocked.mock.calls.map(([key]) => key)).toEqual([
+      ':normal',
+      ':normal',
+      ':nmap',
+      ':noremap',
+      ':normal',
+      ':normal',
+      ':mapclear',
+    ])
+    // Ingenting ändrades, och j är fortfarande j.
+    s.sendKeys('j')
+    expect(s.getState()).toMatchObject({ content: 'one\ntwo', cursor: { line: 2, col: 1 } })
+  })
+
+  it('leaves those ex commands alone in a session without a lock', () => {
+    const s = open('one two')
+    s.sendKeys(':normal x<CR>')
+    expect(s.getState().content).toBe('ne two')
+  })
+
   it('feeds AltGr characters (Ctrl+Alt on Windows) to vim itself', () => {
     const { s, onBlocked } = locked('foo bar', ['$'])
     const event = press(s.view.contentDOM, { key: '$', ctrlKey: true, altKey: true })
