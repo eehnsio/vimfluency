@@ -1,10 +1,15 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { evaluate, onlyNeedsNormalMode, type SessionState } from '../engine/checks'
 import { createExerciseSession, startNumbers } from '../engine/exerciseSession'
+import { parseKeys } from '../engine/keys'
 import { createOvershootTracker, cursorTarget } from '../engine/overshoot'
 import type { Session } from '../engine/session'
 import { activeContent } from '../exercises/define'
 import type { Exercise, NumberOptions } from '../exercises/types'
+
+/** Tempot i "Watch it": en tangent i taget, och en paus på slutet innan övningen börjar om. */
+export const DEMO_STEP_MS = 450
+export const DEMO_HOLD_MS = 1500
 
 export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -13,6 +18,10 @@ export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) 
   const [completed, setCompleted] = useState(false)
   const [blockedKey, setBlockedKey] = useState<string | null>(null)
   const [overshot, setOvershot] = useState(false)
+  // Tangenterna som "Watch it" visat hittills. `null` när ingen demo spelas.
+  const [demo, setDemo] = useState<string[] | null>(null)
+  const demoRef = useRef(false)
+  const demoTimer = useRef<ReturnType<typeof setTimeout> | undefined>(undefined)
 
   const initialContent = activeContent(exercise)
   // Sessionen byggs inte om när valet ändras (då skulle övningen börja om), se effekten nedan.
@@ -27,11 +36,48 @@ export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) 
     setOvershot(false)
   }, [])
 
+  const stopDemo = useCallback(() => {
+    clearTimeout(demoTimer.current)
+    demoRef.current = false
+    setDemo(null)
+  }, [])
+
   const reset = useCallback(() => {
+    stopDemo()
     sessionRef.current?.reset()
     clearFeedback()
     sessionRef.current?.view.focus()
-  }, [clearFeedback])
+  }, [clearFeedback, stopDemo])
+
+  /**
+   * Spelar upp referenslösningen tangent för tangent i editorn, håller kvar
+   * resultatet en stund och börjar sedan om. Räknas inte som klarad.
+   */
+  const watch = useCallback(() => {
+    const session = sessionRef.current
+    if (!session || demoRef.current) return
+    const tokens = parseKeys(exercise.solution)
+    session.reset()
+    clearFeedback()
+    demoRef.current = true
+    setDemo([])
+    let index = 0
+    const step = () => {
+      if (index < tokens.length) {
+        const token = tokens[index++]
+        session.sendKeys(token === '<' ? '<lt>' : token)
+        setDemo((shown) => [...(shown ?? []), token])
+        demoTimer.current = setTimeout(step, DEMO_STEP_MS)
+      } else {
+        demoTimer.current = setTimeout(() => {
+          session.reset()
+          stopDemo()
+          session.view.focus()
+        }, DEMO_HOLD_MS)
+      }
+    }
+    demoTimer.current = setTimeout(step, DEMO_STEP_MS)
+  }, [exercise.solution, clearFeedback, stopDemo])
 
   useEffect(() => {
     const parent = containerRef.current
@@ -51,6 +97,8 @@ export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) 
     const onSessionChange = () => {
       const next = session.getState()
       setState(next)
+      // Under en demo är det inte användaren som flyttar sig eller löser något.
+      if (demoRef.current) return
       // Varningen står kvar tills man startar om eller landar på målet.
       if (trackOvershoot(next.cursor, next.mode)) setOvershot(true)
       if (evaluate(exercise.checks, next, initialContent).passed) setCompleted(true)
@@ -61,11 +109,12 @@ export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) 
     session.view.focus()
 
     return () => {
+      stopDemo()
       unsubscribe()
       session.destroy()
       sessionRef.current = null
     }
-  }, [exercise, initialContent, reset, clearFeedback])
+  }, [exercise, initialContent, reset, clearFeedback, stopDemo])
 
   // Nytt val i rubriken gäller direkt, utan att övningen börjar om.
   useEffect(() => {
@@ -76,5 +125,5 @@ export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) 
   // Texten är rätt men man står kvar i insert/visual: be om Esc.
   const needsEsc = !completed && state !== null && onlyNeedsNormalMode(exercise.checks, state, initialContent)
 
-  return { containerRef, state, completed, blockedKey, overshot, needsEsc, reset }
+  return { containerRef, state, completed, blockedKey, overshot, needsEsc, reset, watch, demo }
 }

@@ -19,6 +19,12 @@ describe('CompletionBanner', () => {
     expect(screen.queryByRole('button', { name: /^Next/ })).not.toBeInTheDocument()
   })
 
+  it('marks a finished lesson and says what comes next', () => {
+    render(<CompletionBanner milestone={{ kind: 'lesson', upNext: 'Back one word: b' }} onReset={() => {}} />)
+    expect(screen.getByRole('status')).toHaveTextContent('Lesson complete')
+    expect(screen.getByRole('status')).toHaveTextContent('Up next: Back one word: b')
+  })
+
   it('marks a finished category and says what comes next', () => {
     render(<CompletionBanner milestone={{ kind: 'category', title: 'Basics', upNext: 'Motions' }} onReset={() => {}} />)
     expect(screen.getByRole('status')).toHaveTextContent('Basics complete')

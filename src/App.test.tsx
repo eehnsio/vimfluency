@@ -1,7 +1,12 @@
-import { act, render, screen, within } from '@testing-library/react'
+import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
-import { allExercises, categories, getExercise } from './exercises/registry'
+import { lessonDisplayKeys } from './engine/curriculum'
+import { allExercises, categories, getExercise, lessonOf } from './exercises/registry'
+import { DEMO_HOLD_MS, DEMO_STEP_MS } from './hooks/useExerciseSession'
+
+const titleOf = (exercise: (typeof allExercises)[number]) => lessonOf(exercise)!.title
+const exercisesOf = (category: (typeof categories)[number]) => category.lessons.flatMap((lesson) => lesson.exercises)
 
 beforeEach(() => localStorage.clear())
 
@@ -25,7 +30,8 @@ describe('App', () => {
     render(<App />)
     expect(screen.getByRole('heading', { level: 1, name: 'vimfluency' })).toBeInTheDocument()
     const first = allExercises[0]
-    expect(screen.getByRole('heading', { level: 2, name: first.title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: titleOf(first) })).toBeInTheDocument()
+    expect(screen.getByText('Try it')).toBeInTheDocument()
     expect(screen.getByRole('button', { name: /Start here 1\/5/ })).toBeInTheDocument()
     expect(document.querySelector('.cm-goal')).toHaveTextContent('// Goal: turn on line numbers')
     // Som i nvim: inga radnummer förrän man slår på dem, och inget val i rubriken än.
@@ -37,24 +43,24 @@ describe('App', () => {
     localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], openedNvim: true }))
     const user = userEvent.setup()
     const lastCategory = categories[categories.length - 1]
-    const target = lastCategory.exercises[lastCategory.exercises.length - 1]
+    const targetLesson = lastCategory.lessons[lastCategory.lessons.length - 1]
     const { unmount } = render(<App />)
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
 
     await user.click(screen.getByRole('button', { name: /Start here/ }))
     const drawer = screen.getByRole('dialog', { name: 'Course' })
-    expect(within(drawer).getByRole('button', { name: allExercises[0].title })).toHaveFocus()
+    expect(within(drawer).getByRole('button', { name: titleOf(allExercises[0]) })).toHaveFocus()
     await user.click(within(drawer).getByRole('button', { name: new RegExp(`^${lastCategory.title}`) }))
-    await user.click(within(drawer).getByRole('button', { name: target.title }))
+    await user.click(within(drawer).getByRole('button', { name: targetLesson.title }))
 
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: target.title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: targetLesson.title })).toBeInTheDocument()
     expect(document.activeElement).toHaveClass('cm-content')
     unmount()
 
     render(<App />)
     const detail = screen.getByRole('article')
-    expect(within(detail).getByRole('heading', { name: target.title })).toBeInTheDocument()
+    expect(within(detail).getByRole('heading', { name: targetLesson.title })).toBeInTheDocument()
   })
 
   it('closes the drawer with Esc and gives the editor focus back', async () => {
@@ -106,7 +112,7 @@ describe('App completion flow', () => {
 
     await user.keyboard('{Enter}')
     const next = allExercises[allExercises.indexOf(exercise) + 1]
-    expect(screen.getByRole('heading', { level: 2, name: next.title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: titleOf(next) })).toBeInTheDocument()
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
   })
 })
@@ -123,9 +129,19 @@ describe('App milestones', () => {
   }
 
   it('celebrates a finished category', async () => {
-    const motions = categories.find((c) => c.exercises.some((e) => e.id === 'word-jumps'))!
-    const others = motions.exercises.map((e) => e.id).filter((id) => id !== 'word-jumps')
+    const motions = categories.find((c) => exercisesOf(c).some((e) => e.id === 'word-jumps'))!
+    const others = exercisesOf(motions).map((e) => e.id).filter((id) => id !== 'word-jumps')
     expect(await finish(others)).toHaveTextContent(`${motions.title} complete`)
+  })
+
+  it('celebrates a finished lesson with several exercises', async () => {
+    // word-jumps är den guidade övningen i sin lektion; de andra är redan klara.
+    const lesson = lessonOf(getExercise('word-jumps')!)!
+    const others = lesson.exercises.map((e) => e.id).filter((id) => id !== 'word-jumps')
+    expect(others.length).toBeGreaterThan(0)
+    const status = await finish(others)
+    expect(status).toHaveTextContent('Lesson complete')
+    expect(status).toHaveTextContent('Up next:')
   })
 
   it('celebrates the whole course, and the last exercise has nowhere to go', async () => {
@@ -146,6 +162,29 @@ describe('App overshoot feedback', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('You went past the target')
     await user.keyboard('r')
     expect(screen.queryByRole('alert')).not.toBeInTheDocument()
+  })
+})
+
+describe('App watch it', () => {
+  it('plays the solution key by key, then starts over without marking the exercise complete', () => {
+    vi.useFakeTimers()
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    render(<App />)
+    const position = () => screen.getByText(/^\d+:\d+$/).textContent
+    const start = position()
+
+    fireEvent.click(screen.getByRole('button', { name: /Watch it/ }))
+    act(() => vi.advanceTimersByTime(DEMO_STEP_MS * 2))
+    expect(screen.getByRole('status')).toHaveTextContent('Watch: 4 w')
+    expect(position()).not.toBe(start)
+    expect(screen.getByRole('button', { name: 'Watching…' })).toBeDisabled()
+
+    act(() => vi.advanceTimersByTime(DEMO_HOLD_MS + DEMO_STEP_MS))
+    expect(position()).toBe(start)
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toEqual([])
+    vi.useRealTimers()
   })
 })
 
@@ -174,7 +213,8 @@ describe('App locking', () => {
     render(<App />)
     document.querySelector<HTMLElement>('.cm-content')!.focus()
     await user.keyboard('b')
-    expect(await screen.findByRole('alert')).toHaveTextContent('b is locked here. Use 0-9 w or r to start over.')
+    const keys = lessonDisplayKeys(lessonOf(exercise)!).join(' ')
+    expect(await screen.findByRole('alert')).toHaveTextContent(`b is locked here. Use ${keys} or r to start over.`)
     expect(screen.getByText(/Keys in play/)).toBeInTheDocument()
   })
 })
@@ -186,13 +226,13 @@ describe('App intro shell', () => {
     expect(screen.getByText(/Don't be scared/)).toBeInTheDocument()
     expect(screen.getByTestId('prompt')).toBeInTheDocument()
     // Ingen övning och inga hintar innan editorn är öppen.
-    expect(screen.queryByRole('heading', { name: allExercises[0].title })).not.toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: titleOf(allExercises[0]) })).not.toBeInTheDocument()
     expect(screen.queryByRole('region', { name: 'Hints' })).not.toBeInTheDocument()
 
     await user.keyboard('nvim{Enter}')
     expect(screen.queryByTestId('prompt')).not.toBeInTheDocument()
     expect(screen.getByText('nvim src/App.tsx')).toBeInTheDocument()
-    expect(screen.getByRole('heading', { level: 2, name: allExercises[0].title })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { level: 2, name: titleOf(allExercises[0]) })).toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).openedNvim).toBe(true)
   })
 

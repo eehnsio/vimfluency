@@ -6,7 +6,9 @@ interface Props {
   state: SessionState | null
   filename: string
   blockedKey?: string | null
-  /** Tangenterna övningen använder ("Keys in play"), för låst-meddelandet. */
+  /** Den låsta tangenten är versalen av en upplåst: troligen Caps Lock. */
+  capsLock?: boolean
+  /** Lektionens tangenter ("Keys in play"), för låst-meddelandet. */
   keysInPlay?: string[]
   /** Texten är rätt, men man måste gå tillbaka till normalt läge. */
   needsEsc?: boolean
@@ -14,6 +16,8 @@ interface Props {
   overshot?: boolean
   /** Fokus är utanför editorn, så tangenterna når den inte. */
   unfocused?: boolean
+  /** Tangenterna "Watch it" har spelat upp hittills. `null` när ingen demo spelas. */
+  demo?: string[] | null
 }
 
 const MODE_COLOR = {
@@ -41,19 +45,31 @@ function scrollPercent(state: SessionState) {
 }
 
 /** Statusraden som i nvim, följd av kommandoraden där meddelanden visas. */
-export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overshot, needsEsc, unfocused }: Props) {
+export function StatusLine({
+  state,
+  filename,
+  blockedKey,
+  capsLock,
+  keysInPlay = [],
+  overshot,
+  needsEsc,
+  unfocused,
+  demo = null,
+}: Props) {
   const mode = state?.mode ?? 'normal'
-  // Ett meddelande i taget. Utan fokus når inga tangenter editorn, så det går först.
-  // Sedan Esc-uppmaningen, låst tangent och överskjutet mål.
-  const message = unfocused
-    ? 'unfocused'
-    : needsEsc
-      ? 'needsEsc'
-      : blockedKey
-        ? 'blocked'
-        : overshot
-          ? 'overshot'
-          : null
+  // Ett meddelande i taget. En demo visar sina tangenter. Utan fokus når inga
+  // tangenter editorn, så det går före Esc-uppmaningen, låst tangent och överskjutet mål.
+  const message = demo
+    ? 'demo'
+    : unfocused
+      ? 'unfocused'
+      : needsEsc
+        ? 'needsEsc'
+        : blockedKey
+          ? 'blocked'
+          : overshot
+            ? 'overshot'
+            : null
   return (
     <div className="font-mono text-sm">
       <div className="flex items-stretch bg-surface-raised">
@@ -66,6 +82,16 @@ export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overs
         </span>
       </div>
       <div className="h-8 px-3 py-1.5 text-sm text-fg-muted">
+        {message === 'demo' && (
+          <span role="status" className="text-accent">
+            Watch:{' '}
+            {demo!.map((key, index) => (
+              <span key={index}>
+                <Kbd>{prettyKey(key)}</Kbd>{' '}
+              </span>
+            ))}
+          </span>
+        )}
         {message === 'unfocused' && (
           <span role="status">
             The editor is not focused. Click it or press <Kbd>Esc</Kbd> to keep going.
@@ -78,7 +104,7 @@ export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overs
         )}
         {message === 'blocked' && (
           <span role="alert" className="text-warning">
-            <Kbd>{prettyKey(blockedKey!)}</Kbd> is locked here. Use{' '}
+            <Kbd>{prettyKey(blockedKey!)}</Kbd> is locked here.{capsLock && ' Caps Lock on?'} Use{' '}
             {keysInPlay.map((key) => (
               <span key={key}>
                 <Kbd>{key}</Kbd>{' '}
@@ -89,7 +115,7 @@ export function StatusLine({ state, filename, blockedKey, keysInPlay = [], overs
         )}
         {message === 'overshot' && (
           <span role="alert" className="text-danger">
-            You went past the target. Press <Kbd>r</Kbd> to start over.
+            You went past the target. Move back, or press <Kbd>r</Kbd> to start over.
           </span>
         )}
       </div>

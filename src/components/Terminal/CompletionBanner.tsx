@@ -1,8 +1,9 @@
 import { Code } from '../Kbd'
 
-/** Hur stort ögonblicket är: en övning, en hel kategori eller hela kursen. */
+/** Hur stort ögonblicket är: en övning, en lektion med flera övningar, en hel kategori eller hela kursen. */
 export type Milestone =
   | { kind: 'exercise' }
+  | { kind: 'lesson'; upNext?: string }
   | { kind: 'category'; title: string; upNext?: string }
   | { kind: 'course'; total: number }
 
@@ -34,10 +35,11 @@ export function CompletionBanner({ milestone = { kind: 'exercise' }, onNext, nex
       <span className="flex min-w-0 flex-col">
         <span className="font-semibold text-success">
           {milestone.kind === 'exercise' && 'Exercise complete'}
+          {milestone.kind === 'lesson' && 'Lesson complete'}
           {milestone.kind === 'category' && `${milestone.title} complete`}
           {milestone.kind === 'course' && 'Course complete'}
         </span>
-        {milestone.kind === 'category' && milestone.upNext && (
+        {(milestone.kind === 'lesson' || milestone.kind === 'category') && milestone.upNext && (
           <span className="text-fg-muted">Up next: {milestone.upNext}</span>
         )}
         {milestone.kind === 'course' && (

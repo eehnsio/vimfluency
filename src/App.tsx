@@ -9,16 +9,23 @@ import { CompletionBanner, type Milestone } from './components/Terminal/Completi
 import { StatusLine } from './components/Terminal/StatusLine'
 import { TerminalPane } from './components/Terminal/TerminalPane'
 import { VimEditor } from './components/Terminal/VimEditor'
+import { lessonDisplayKeys, unlockedKeys } from './engine/curriculum'
 import { DEFAULT_NUMBERS } from './engine/exerciseSession'
-import { displayKeys, isModifierKey } from './engine/lock'
-import { allExercises, categories, getExercise, nextExercise } from './exercises/registry'
+import { isModifierKey } from './engine/lock'
+import { allExercises, allLessons, categories, categoryOf, getExercise, lessonOf, nextExercise } from './exercises/registry'
 import { useExerciseSession } from './hooks/useExerciseSession'
 import { useProgress } from './hooks/useProgress'
 
 export default function App() {
   const progress = useProgress()
   const exercise = (progress.lastId && getExercise(progress.lastId)) || allExercises[0]
-  const { containerRef, state, completed, blockedKey, overshot, needsEsc, reset } = useExerciseSession(exercise, progress.numbers)
+  // Alla övningar i registret hör till en lektion i en kategori.
+  const lesson = lessonOf(exercise)!
+  const category = categoryOf(lesson)!
+  const { containerRef, state, completed, blockedKey, overshot, needsEsc, reset, watch, demo } = useExerciseSession(
+    exercise,
+    progress.numbers,
+  )
 
   const { markCompleted, select, setNumbers } = progress
   useEffect(() => {
@@ -29,7 +36,6 @@ export default function App() {
   useEffect(() => {
     if (completed && exercise.savesNumberChoice && state) setNumbers(state.options)
   }, [completed, exercise.savesNumberChoice, state, setNumbers])
-
 
   // Första övningen börjar i ett skal där man måste skriva `nvim`.
   const showShell = exercise.id === allExercises[0].id && !progress.openedNvim
@@ -80,23 +86,30 @@ export default function App() {
     closeCourse()
   }
 
-  const category = categories.find((c) => c.exercises.includes(exercise))
-  const position = category && `${category.exercises.indexOf(exercise) + 1}/${category.exercises.length}`
+  const position = `${category.lessons.indexOf(lesson) + 1}/${category.lessons.length}`
+  const step = { index: lesson.exercises.indexOf(exercise), total: lesson.exercises.length }
+  const keysInPlay = lessonDisplayKeys(lesson)
   const done = allExercises.filter(({ id }) => progress.completed.has(id)).length
+  // Caps Lock ger versaler: `J` är låst men `j` är inte det.
+  const capsLock = blockedKey !== null && /^[A-Z]$/.test(blockedKey) && unlockedKeys(exercise).has(blockedKey.toLowerCase())
 
   // Den här övningen räknas som klar direkt, innan framsteget hunnit sparas.
   const doneIds = new Set(progress.completed)
   if (completed) doneIds.add(exercise.id)
+  const allDone = (ids: { id: string }[]) => ids.every(({ id }) => doneIds.has(id))
   const next = nextExercise(exercise.id)
   // Efter sista övningen går Enter till den första som inte är klar.
   const target = next ?? allExercises.find(({ id }) => !doneIds.has(id))
   const nextId = target?.id
-  const targetCategory = target && categories.find((c) => c.exercises.includes(target))
-  const milestone: Milestone = allExercises.every(({ id }) => doneIds.has(id))
+  const nextLesson = allLessons[allLessons.indexOf(lesson) + 1]
+  const nextCategory = categories[categories.indexOf(category) + 1]
+  const milestone: Milestone = allDone(allExercises)
     ? { kind: 'course', total: allExercises.length }
-    : category?.exercises.every(({ id }) => doneIds.has(id))
-      ? { kind: 'category', title: category.title, upNext: targetCategory !== category ? targetCategory?.title : undefined }
-      : { kind: 'exercise' }
+    : allDone(category.lessons.flatMap((l) => l.exercises))
+      ? { kind: 'category', title: category.title, upNext: nextCategory?.title }
+      : lesson.exercises.length > 1 && allDone(lesson.exercises)
+        ? { kind: 'lesson', upNext: nextLesson?.title }
+        : { kind: 'exercise' }
 
   // När övningen är klar tar bannern över tangenterna: Enter går vidare, r
   // börjar om och allt annat är låst.
@@ -115,12 +128,25 @@ export default function App() {
     return () => document.removeEventListener('keydown', onKeyDown, true)
   }, [completed, nextId, select, reset])
 
+  // Medan "Watch it" spelar gör tangenterna ingenting.
+  const watching = demo !== null
+  useEffect(() => {
+    if (!watching) return
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.metaKey || event.ctrlKey || event.altKey || isModifierKey(event)) return
+      event.preventDefault()
+      event.stopPropagation()
+    }
+    document.addEventListener('keydown', onKeyDown, true)
+    return () => document.removeEventListener('keydown', onKeyDown, true)
+  }, [watching])
+
   return (
     <>
       <div inert={courseOpen} className="grid h-full grid-cols-[minmax(300px,380px)_minmax(0,1fr)]">
         <aside className="flex min-h-0 flex-col border-r border-border bg-surface-raised">
           <LessonHeader
-            category={category?.title ?? ''}
+            category={category.title}
             position={showShell ? undefined : position}
             done={done}
             total={allExercises.length}
@@ -138,17 +164,23 @@ export default function App() {
                   would on your own machine.
                 </p>
                 <p className="text-[15px] leading-relaxed text-fg-muted">
-                  Each exercise unlocks only the keys it teaches. Everything else, including the mouse, is locked. If
-                  you get stuck, <Kbd>r</Kbd> starts the
+                  Each lesson unlocks the keys it teaches, and you keep everything you have learned. Keys that have not
+                  come up yet, the mouse and the arrow keys are locked. If you get stuck, <Kbd>r</Kbd> starts the
                   exercise over.
                 </p>
               </article>
             ) : (
               <ExerciseDetail
+                lesson={lesson}
                 exercise={exercise}
+                step={step}
+                keys={keysInPlay}
+                hasEarlier={allLessons.indexOf(lesson) > 0}
                 onReset={reset}
                 onSolutionShown={() => progress.markAssisted(exercise.id)}
                 onFocusEditor={focusEditor}
+                onWatch={step.index === 0 ? watch : undefined}
+                watching={watching}
               />
             )}
           </div>
@@ -171,10 +203,12 @@ export default function App() {
                 state={state}
                 filename={exercise.activeFile}
                 blockedKey={blockedKey}
-                keysInPlay={displayKeys(exercise.solution, exercise.allowedKeys)}
+                capsLock={capsLock}
+                keysInPlay={keysInPlay}
                 overshot={overshot && !completed}
                 needsEsc={needsEsc}
-                unfocused={!editorFocused && !completed}
+                unfocused={!editorFocused && !completed && !watching}
+                demo={demo}
               />
             </div>
           </TerminalPane>
