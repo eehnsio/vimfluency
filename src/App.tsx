@@ -12,6 +12,7 @@ import { VimEditor } from './components/Terminal/VimEditor'
 import { lessonDisplayKeys, unlockedKeys } from './engine/curriculum'
 import { DEFAULT_NUMBERS } from './engine/exerciseSession'
 import { isModifierKey } from './engine/lock'
+import { isEngineKey } from './engine/vimInput'
 import { allExercises, allLessons, categories, categoryOf, getExercise, lessonOf, nextExercise } from './exercises/registry'
 import { useExerciseSession } from './hooks/useExerciseSession'
 import { useProgress } from './hooks/useProgress'
@@ -101,14 +102,15 @@ export default function App() {
   // Efter sista övningen går Enter till den första som inte är klar.
   const target = next ?? allExercises.find(({ id }) => !doneIds.has(id))
   const nextId = target?.id
-  const nextLesson = allLessons[allLessons.indexOf(lesson) + 1]
-  const nextCategory = categories[categories.indexOf(category) + 1]
+  // "Up next" säger vart Enter går, och står inte när Enter stannar i samma lektion eller kategori.
+  const targetLesson = target && lessonOf(target)
+  const targetCategory = targetLesson && categoryOf(targetLesson)
   const milestone: Milestone = allDone(allExercises)
     ? { kind: 'course', total: allExercises.length }
     : allDone(category.lessons.flatMap((l) => l.exercises))
-      ? { kind: 'category', title: category.title, upNext: nextCategory?.title }
+      ? { kind: 'category', title: category.title, upNext: targetCategory !== category ? targetCategory?.title : undefined }
       : lesson.exercises.length > 1 && allDone(lesson.exercises)
-        ? { kind: 'lesson', upNext: nextLesson?.title }
+        ? { kind: 'lesson', upNext: targetLesson !== lesson ? targetLesson?.title : undefined }
         : { kind: 'exercise' }
 
   // När övningen är klar tar bannern över tangenterna: Enter går vidare, r
@@ -128,18 +130,24 @@ export default function App() {
     return () => document.removeEventListener('keydown', onKeyDown, true)
   }, [completed, nextId, select, reset])
 
-  // Medan "Watch it" spelar gör tangenterna ingenting.
+  // Medan "Watch it" spelar når inga tangenter editorn, utom `r` som avbryter
+  // och börjar om. Tab lämnar editorn som vanligt, och utanför den fungerar
+  // tangentbordet (knappar, kurslådan).
   const watching = demo !== null
   useEffect(() => {
     if (!watching) return
     const onKeyDown = (event: KeyboardEvent) => {
-      if (event.metaKey || event.ctrlKey || event.altKey || isModifierKey(event)) return
-      event.preventDefault()
+      // Demon skickar själv Enter och Esc till prompten.
+      if (isEngineKey(event) || event.metaKey || isModifierKey(event)) return
+      if (!(event.target instanceof Node) || !containerRef.current?.contains(event.target)) return
       event.stopPropagation()
+      if (event.key === 'Tab') return
+      event.preventDefault()
+      if (event.key === 'r' && !event.ctrlKey && !event.altKey) reset()
     }
     document.addEventListener('keydown', onKeyDown, true)
     return () => document.removeEventListener('keydown', onKeyDown, true)
-  }, [watching])
+  }, [watching, containerRef, reset])
 
   return (
     <>

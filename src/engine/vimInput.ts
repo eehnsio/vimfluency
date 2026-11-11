@@ -22,9 +22,18 @@ export function openPrompt(view: EditorView): HTMLInputElement | null {
 /** Sant när tangenter skriver text istället för att vara kommandon: insert-läge eller en öppen prompt. */
 const typesText = (view: EditorView, cm: VimEditor) => vimMode(cm) === 'insert' || openPrompt(view) !== null
 
+// Enter och Esc till prompten skickas som `keydown`. De märks, så att sidans
+// egna lyssnare inte tar dem för användarens tangenter och stoppar dem.
+const engineKeys = new WeakSet<Event>()
+
+/** Sant för en tangent som motorn själv skickat (`sendKeys`, `reset`), inte användaren. */
+export const isEngineKey = (event: Event) => engineKeys.has(event)
+
 function pressInPrompt(input: HTMLInputElement, key: 'Enter' | 'Escape') {
   const keyCode = key === 'Enter' ? 13 : 27
-  input.dispatchEvent(new KeyboardEvent('keydown', { key, keyCode, bubbles: true, cancelable: true }))
+  const event = new KeyboardEvent('keydown', { key, keyCode, bubbles: true, cancelable: true })
+  engineKeys.add(event)
+  input.dispatchEvent(event)
 }
 
 /** Stänger en öppen prompt utan att köra den. */

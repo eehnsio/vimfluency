@@ -2,7 +2,7 @@ import { act, fireEvent, render, screen, within } from '@testing-library/react'
 import userEvent from '@testing-library/user-event'
 import App from './App'
 import { lessonDisplayKeys } from './engine/curriculum'
-import { allExercises, categories, getExercise, lessonOf } from './exercises/registry'
+import { allExercises, categories, getExercise, lessonOf, nextExercise } from './exercises/registry'
 import { DEMO_HOLD_MS, DEMO_STEP_MS } from './hooks/useExerciseSession'
 
 const titleOf = (exercise: (typeof allExercises)[number]) => lessonOf(exercise)!.title
@@ -118,8 +118,8 @@ describe('App completion flow', () => {
 })
 
 describe('App milestones', () => {
-  const finish = async (completed: string[]) => {
-    const exercise = getExercise('word-jumps')!
+  const finish = async (completed: string[], id = 'word-jumps') => {
+    const exercise = getExercise(id)!
     localStorage.setItem('vimfluency:progress', JSON.stringify({ completed, lastId: exercise.id }))
     const user = userEvent.setup()
     render(<App />)
@@ -134,14 +134,33 @@ describe('App milestones', () => {
     expect(await finish(others)).toHaveTextContent(`${motions.title} complete`)
   })
 
-  it('celebrates a finished lesson with several exercises', async () => {
-    // word-jumps är den guidade övningen i sin lektion; de andra är redan klara.
+  it('celebrates a finished lesson with several exercises, and says where Enter goes', async () => {
+    // word-back-3 är lektionens sista övning (`3b`, oberoende av layout); de andra är redan klara.
+    const last = getExercise('word-back-3')!
+    const lesson = lessonOf(last)!
+    expect(lesson.exercises.at(-1)).toBe(last)
+    const others = lesson.exercises.map((e) => e.id).filter((id) => id !== last.id)
+    const status = await finish(others, last.id)
+    expect(status).toHaveTextContent('Lesson complete')
+    expect(status).toHaveTextContent(`Up next: ${titleOf(nextExercise(last.id)!)}`)
+  })
+
+  it('leaves out "Up next" when Enter stays in the same lesson', async () => {
+    // Den guidade övningen görs om i en klar lektion: Enter går till lektionens praktik.
     const lesson = lessonOf(getExercise('word-jumps')!)!
     const others = lesson.exercises.map((e) => e.id).filter((id) => id !== 'word-jumps')
     expect(others.length).toBeGreaterThan(0)
     const status = await finish(others)
     expect(status).toHaveTextContent('Lesson complete')
-    expect(status).toHaveTextContent('Up next:')
+    expect(status).not.toHaveTextContent('Up next')
+  })
+
+  it('leaves out "Up next" when Enter stays in the same category', async () => {
+    const motions = categories.find((c) => exercisesOf(c).some((e) => e.id === 'word-jumps'))!
+    const others = exercisesOf(motions).map((e) => e.id).filter((id) => id !== 'word-jumps')
+    const status = await finish(others)
+    expect(status).toHaveTextContent(`${motions.title} complete`)
+    expect(status).not.toHaveTextContent('Up next')
   })
 
   it('celebrates the whole course, and the last exercise has nowhere to go', async () => {
@@ -184,6 +203,61 @@ describe('App watch it', () => {
     expect(position()).toBe(start)
     expect(screen.queryByRole('status')).not.toBeInTheDocument()
     expect(JSON.parse(localStorage.getItem('vimfluency:progress')!).completed).toEqual([])
+    vi.useRealTimers()
+  })
+
+  it('runs a command in the : prompt', () => {
+    vi.useFakeTimers()
+    const exercise = getExercise('go-to-line')! // `:15<CR>` från rad 3
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    render(<App />)
+    const position = () => screen.getByText(/^\d+:\d+$/).textContent
+
+    fireEvent.click(screen.getByRole('button', { name: /Watch it/ }))
+    act(() => vi.advanceTimersByTime(DEMO_STEP_MS * 3))
+    expect(document.querySelector('.cm-editor input')).not.toBeNull()
+    act(() => vi.advanceTimersByTime(DEMO_STEP_MS))
+    // Enter kör kommandot: prompten stängs och markören står på rad 15.
+    expect(document.querySelector('.cm-editor input')).toBeNull()
+    expect(position()).toBe('15:1')
+    vi.useRealTimers()
+  })
+
+  it('ignores keys in the editor while it plays, except r which stops it', () => {
+    vi.useFakeTimers()
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    render(<App />)
+    const position = () => screen.getByText(/^\d+:\d+$/).textContent
+    const start = position()
+
+    fireEvent.click(screen.getByRole('button', { name: /Watch it/ }))
+    expect(document.activeElement).toHaveClass('cm-content')
+    act(() => typeInEditor('w'))
+    expect(position()).toBe(start)
+
+    act(() => vi.advanceTimersByTime(DEMO_STEP_MS))
+    act(() => typeInEditor('r'))
+    expect(screen.queryByRole('status')).not.toBeInTheDocument()
+    expect(screen.getByRole('button', { name: /Watch it/ })).toBeEnabled()
+    // Demon är stoppad: inga fler tangenter spelas upp.
+    act(() => vi.advanceTimersByTime(DEMO_STEP_MS * 3))
+    expect(position()).toBe(start)
+    vi.useRealTimers()
+  })
+
+  it('leaves the keyboard alone outside the editor while it plays', () => {
+    vi.useFakeTimers()
+    const exercise = getExercise('word-jumps')!
+    localStorage.setItem('vimfluency:progress', JSON.stringify({ completed: [], lastId: exercise.id }))
+    render(<App />)
+
+    fireEvent.click(screen.getByRole('button', { name: /Watch it/ }))
+    const startOver = screen.getByRole('button', { name: /Start over/ })
+    expect(fireEvent.keyDown(startOver, { key: 'Enter' })).toBe(true)
+    expect(fireEvent.keyDown(startOver, { key: 'Tab' })).toBe(true)
+    // Tab i editorn stoppas inte heller, så fokus kan lämna den.
+    expect(fireEvent.keyDown(document.querySelector('.cm-content')!, { key: 'Tab' })).toBe(true)
     vi.useRealTimers()
   })
 })

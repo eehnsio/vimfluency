@@ -59,6 +59,8 @@ export function useExerciseSession(exercise: Exercise, numbers?: NumberOptions) 
     const tokens = parseKeys(exercise.solution)
     session.reset()
     clearFeedback()
+    // Knappen blir inaktiv medan demon spelar. Fokus i editorn gör att `r` och Tab fungerar.
+    session.view.focus()
     demoRef.current = true
     setDemo([])
     let index = 0
