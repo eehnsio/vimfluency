@@ -23,7 +23,7 @@ Bocka av i en kopia, inte i den här filen.
 ## Introt och skalet
 
 - [ ] Första besöket visar skalet (`zsh` i titelraden), inte editorn.
-- [ ] Lektionen visar "Open the editor" och förklarar låset och `r` en gång, utan mål och hintar, tills `nvim` är öppnat.
+- [ ] Lektionen visar "Open the editor" och förklarar det kumulativa låset och `r` en gång, utan mål och hintar, tills `nvim` är öppnat.
 - [ ] Man kan skriva direkt utan att klicka.
 - [ ] `ls` + Enter visar `zsh: command not found: ls` och rensar raden.
 - [ ] Backspace suddar, och felet försvinner när man börjar skriva igen.
@@ -37,7 +37,7 @@ Bocka av i en kopia, inte i den här filen.
 
 Gör i några olika övningar, minst en rörelseövning, en ändringsövning och en prompt-övning (`:`/`/`).
 
-- [ ] En tangent som inte är med gör ingenting och visar i gult "`x` is locked here. Use … or `r` to start over." med övningens tangenter. Piltangenter visas som `←` `→` `↑` `↓`.
+- [ ] En tangent som inte lärts ut ännu gör ingenting och visar i gult "`x` is locked here. Use … or `r` to start over." med lektionens tangenter. Piltangenter visas som `←` `→` `↑` `↓`.
 - [ ] Piltangenter, Home, End och Delete är låsta.
 - [ ] Musklick i editorn flyttar inte markören, men editorn behåller fokus.
 - [ ] Dubbelklick och dra markerar ingen text.
@@ -48,7 +48,7 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] `r` i normalläge startar om övningen.
 - [ ] `r` i insert-läge skriver ett `r` (prova i "Open a new line: o": `'react'`).
 - [ ] Backspace suddar i insert-läge och i `:`/`/`-prompten.
-- [ ] Låsta tecken går inte att skriva i prompten (prova `x` efter `/` i "Search: / and n").
+- [ ] Prompten tar vilka tecken som helst (prova `x` efter `/` i "Search: / and n"), men Enter kör bara det som står där.
 - [ ] Esc tar en ur insert, visual och prompten i alla övningar.
 - [ ] Tab och Shift+Tab i normalläge flyttar fokus ut ur editorn (Shift+Tab till lektionen). I insert-läge är Tab låst.
 - [ ] Fokus utanför editorn: statusraden säger "The editor is not focused", och Esc ger editorn fokus igen.
@@ -71,15 +71,15 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] Alla andra tangenter gör ingenting och editorn är låst.
 - [ ] Knapparna "Start over" och "Next" fungerar med mus, och med Tab + Enter/mellanslag.
 - [ ] Sista övningen med andra övningar kvar: knappen heter "First unfinished" och Enter går till den första som inte är klar.
-- [ ] Sista klara övningen i en kategori: bannern säger "<Kategori> complete" och "Up next: <nästa kategori>".
-- [ ] Alla 32 klara: bannern säger "Course complete" med `:q`-skämtet, och det finns ingen Next-knapp.
+- [ ] Sista klara övningen i en kategori: bannern säger "<Kategori> complete" och "Up next: <nästa kategori>". Sista i en lektion med flera övningar: "Lesson complete".
+- [ ] Alla 81 klara: bannern säger "Course complete" med `:q`-skämtet, och det finns ingen Next-knapp.
 - [ ] Bannern och bocken glider in kort (under en sekund), och står still med "Reduce motion" påslaget.
 
 ## Lektionen och målet
 
 - [ ] Första raden i editorn är `// Goal: …`, markerad i accentfärg. Det finns inga fler kommentarer i början av filen.
-- [ ] Lektionen förklarar tangenterna utan att upprepa målet eller avslöja svaret.
-- [ ] "Keys in play" visar bara kommandotangenter: `0-9` istället för enskilda siffror, inga bokstäver från texten man skriver, `gg` och `dd` som ett chip.
+- [ ] Lektionen förklarar tangenterna utan att upprepa målet eller avslöja svaret. Förklaringen är densamma i lektionens praktikövningar.
+- [ ] "Keys in play" visar lektionens kommandotangenter: `0-9` istället för enskilda siffror, inga bokstäver från texten man skriver, `gg` och `dd` som ett chip.
 - [ ] Hintarna visas en i taget, och efter sista hinten kommer "Still stuck? Show the keys". Efter varje klick har editorn fokus, så att man kan prova direkt.
 - [ ] Skärmläsare (VoiceOver): en ny hint läses upp.
 - [ ] Byter man övning börjar hintarna om från noll.
@@ -110,51 +110,114 @@ Gör i några olika övningar, minst en rörelseövning, en ändringsövning och
 - [ ] Långa filer scrollar och markören hålls synlig vid `G`, `gg` och `:N`.
 - [ ] Smalt webbläsarfönster: inget bryts sönder så att editorn blir oanvändbar.
 
+## Lektionen, Watch it och det kumulativa låset
+
+- [ ] Första övningen i en lektion heter "Try it" och har "▶ Watch it". Praktikövningarna heter "Practice 1 of 2" och saknar knappen.
+- [ ] "Watch it": lösningen spelas upp tangent för tangent, statusraden visar "Watch: …", knappen säger "Watching…", inga tangenter gör något, och övningen börjar om efteråt utan bock. Hintarna står kvar.
+- [ ] Under "Keys in play" står "Everything from earlier lessons works too" (inte i första lektionen). Prova en tidigare tangent (t.ex. `j` i "Jump between words"): den fungerar. Prova en senare (t.ex. `b`): "is locked here".
+- [ ] Bokstäver ur texten man ska skriva gör inget i normalläge: `w`, `o`, `l` i "Change a word", mellanslag i "Insert text", Enter i "Search". Alla ger "is locked here".
+- [ ] I insert-läge och i `:`/`/`-prompten går det att skriva vad som helst, även tecken utanför lösningen, och sudda med Backspace.
+- [ ] Caps Lock på och `j`: "J is locked here. Caps Lock on?".
+- [ ] Gå förbi målet: "You went past the target. Move back, or press r to start over." Gå tillbaka med `k`/`h` när de är upplåsta: övningen klaras ändå.
+- [ ] Klar lektion med flera övningar: bannern säger "Lesson complete" och "Up next: <nästa lektion>".
+- [ ] Kurslistan visar lektioner med tangentchips, "1/3" på en delvis klar lektion, och öppnar första oklara övningen i lektionen.
+
 ## Varje övning
 
-Lös varje övning med tangenterna nedan, med riktigt tangentbord. Prova också ett fel och `r`.
+Lös varje övning med tangenterna nedan, med riktigt tangentbord. Prova också ett fel och `r`. Tabellen genereras ur registret (se `exercises.test.ts` för hur sessionen byggs); kolla särskilt layoutberoende tangenter: `^` (död tangent), `$`, `{`, `}` (Alt på svensk Mac), `'`, `"`, `(`, `%`, `/`, `:`.
 
-| Kategori | Övning | Tangenter | Kolla särskilt |
+| Kategori | Lektion | Övning | Tangenter |
 |---|---|---|---|
-| Start here | Show line numbers | `:set number<CR>` eller `:set relativenumber<CR>` | Inga radnummer vid start. Valet syns i rubriken efteråt |
-| | Jump with a count | `3j` | Fungerar med alla tre radnummerval |
-| | Where am I? | `2j4l` | |
-| | Which mode am I in? | `ihello<Esc>` | Kräver Esc innan den klaras |
-| | Everything can be configured | `:set nonumber<CR>` och/eller `:set norelativenumber<CR>` | Klaras först när inga nummer syns. Ditt val kommer tillbaka i nästa övning |
-| Basics | Move down and up | `6j` | `j`/`k` följer de synliga raderna |
-| | Move left and right | `17l` | |
-| | Put it together | `2j12l` | |
-| Motions | Jump between words | `4w` | |
-| | Back one word | `4b` | |
-| | End of a word | `3e` | |
-| | Start of the line | `^` | Död tangent på svensk layout |
-| | End of the line | `$` | Alt+4 på svensk Mac |
-| Navigation | Bottom of the file | `G` | Landar på sista kodraden |
-| | Top of the file | `gg` | |
-| | Jump to a line number | `:15<CR>` | Prompten syns, Backspace och Esc fungerar |
-| | Jump to the matching brace | `%` | |
-| Editing | Insert text | `iBig <Esc>` | Mellanslag skrivs |
-| | Append at the end of the line | `A;<Esc>` | |
-| | Open a new line | `oimport { useMemo } from 'react'<Esc>` | `r` och `{`/`}` skrivs i insert-läge |
-| | Change a word | `cwWorld<Esc>` | `u` ångrar |
-| Search and replace | Search: / and n | `/NOTE<CR>nn` | Träffen markeras |
-| | Replace on one line | `:s/isOpen/isVisible/<CR>` | Bara aktuell rad ändras |
-| | Rename a variable | `:%s/count/total/g<CR>` | Alla förekomster ändras |
-| Refactoring | Change inside parentheses | `ci(props<Esc>` | `(` på svensk layout |
-| | Change inside quotes | `ci'Update name<Esc>` | `'` på svensk layout |
-| | Change inside braces | `ci{handleClick<Esc>` | Alt+Shift+8 på svensk Mac |
-| | Find a character | `fw` | |
-| Deleting | Delete lines and repeat | `dd..` | `.` upprepar, `u` ångrar |
-| | Replace a whole line | `S<section>New</section><Esc>` | `<`, `>` och `/` skrivs |
-| | Delete up to a character | `dt)` | |
-| Visual | Select inside parentheses | `vi(d` | Markeringen syns innan `d` |
-| | Select lines | `Vjd` | Båda raderna markeras |
+| Start here | Show line numbers | Try it (`intro-show-numbers`) | `:set number<CR>` |
+|  | Jump with a count | Try it (`intro-line-numbers`) | `3j` |
+|  |  | Practice 1 (`intro-line-numbers-2`) | `3k` |
+|  | Where am I? | Try it (`intro-position`) | `2j4l` |
+|  | Which mode am I in? | Try it (`intro-modes`) | `ihello<Esc>` |
+|  | Everything can be configured | Try it (`intro-hide-numbers`) | `:set nonumber<CR>:set norelativenumber<CR>` |
+| Basics | Move down and up: j and k | Try it (`move-up-down`) | `6j` |
+|  |  | Practice 1 (`move-up-down-2`) | `5k` |
+|  | Move left and right: h and l | Try it (`move-left-right`) | `17l` |
+|  |  | Practice 1 (`move-left-right-2`) | `8h` |
+|  | Put it together | Try it (`move-around`) | `2j12l` |
+|  |  | Practice 1 (`move-around-2`) | `2k17l` |
+| Motions | Jump between words | Try it (`word-jumps`) | `4w` |
+|  |  | Practice 1 (`word-jumps-2`) | `6w` |
+|  |  | Practice 2 (`word-jumps-3`) | `j4w` |
+|  | Back one word: b | Try it (`word-back`) | `4b` |
+|  |  | Practice 1 (`word-back-2`) | `2b` |
+|  |  | Practice 2 (`word-back-3`) | `3b` |
+|  | End of a word: e | Try it (`word-end`) | `3e` |
+|  |  | Practice 1 (`word-end-2`) | `2e` |
+|  |  | Practice 2 (`word-end-3`) | `5e` |
+|  | Start of the line: ^ | Try it (`line-start`) | `^` |
+|  |  | Practice 1 (`line-start-2`) | `0` |
+|  |  | Practice 2 (`line-start-3`) | `j^` |
+|  | End of the line: $ | Try it (`line-end`) | `$` |
+|  |  | Practice 1 (`line-end-2`) | `j$` |
+|  |  | Practice 2 (`line-end-3`) | `$` |
+| Navigation | Bottom and top of the file: G and gg | Try it (`file-bottom`) | `G` |
+|  |  | Practice 1 (`file-top`) | `gg` |
+|  | Jump to a line number: :N | Try it (`go-to-line`) | `:15<CR>` |
+|  |  | Practice 1 (`go-to-line-2`) | `:8<CR>` |
+|  | Jump to the matching brace | Try it (`matching-brace`) | `%` |
+|  |  | Practice 1 (`matching-brace-2`) | `%` |
+|  |  | Practice 2 (`matching-brace-3`) | `%` |
+| Editing | Insert text: i | Try it (`insert-before`) | `iBig <Esc>` |
+|  |  | Practice 1 (`insert-before-2`) | `i there<Esc>` |
+|  |  | Practice 2 (`insert-before-3`) | `3wiprice + <Esc>` |
+|  | Append at the end of the line: A | Try it (`append-line-end`) | `A;<Esc>` |
+|  |  | Practice 1 (`append-line-end-2`) | `A + tax<Esc>` |
+|  |  | Practice 2 (`append-line-end-3`) | `jA;<Esc>` |
+|  | Open a new line: o and O | Try it (`open-line`) | `oimport { useMemo } from 'react'<Esc>` |
+|  |  | Practice 1 (`open-line-2`) | `Oimport { useState } from 'react'<Esc>` |
+|  |  | Practice 2 (`open-line-3`) | `oconsole.log(name)<Esc>` |
+|  | Change a word: cw | Try it (`change-word`) | `cwWorld<Esc>` |
+|  |  | Practice 1 (`change-word-2`) | `cwuseReducer<Esc>` |
+|  |  | Practice 2 (`change-word-3`) | `4wcwGoodbye<Esc>` |
+| Search and replace | Search: / and n | Try it (`search-next`) | `/NOTE<CR>nn` |
+|  |  | Practice 1 (`search-next-2`) | `/return<CR>n` |
+|  |  | Practice 2 (`search-next-3`) | `/NOTE<CR>N` |
+|  | Replace on one line: :s | Try it (`replace-current-line`) | `:s/isOpen/isVisible/<CR>` |
+|  |  | Practice 1 (`replace-current-line-2`) | `:s/count/total/<CR>` |
+|  |  | Practice 2 (`replace-current-line-3`) | `j:s/isOpen/isVisible/<CR>` |
+|  | Rename a variable | Try it (`rename-variable`) | `:%s/count/total/g<CR>` |
+|  |  | Practice 1 (`rename-variable-2`) | `:%s/item/entry/g<CR>` |
+| Refactoring | Change inside parentheses: ci( | Try it (`change-in-parens`) | `ci(props<Esc>` |
+|  |  | Practice 1 (`change-in-parens-2`) | `ci([]<Esc>` |
+|  |  | Practice 2 (`change-in-parens-3`) | `ci(name<Esc>` |
+|  | Change inside quotes: ci' and ci" | Try it (`change-in-quotes`) | `ci'Update name<Esc>` |
+|  |  | Practice 1 (`change-in-quotes-2`) | `ci"Delete<Esc>` |
+|  |  | Practice 2 (`change-in-quotes-3`) | `ci'./utils<Esc>` |
+|  | Change inside braces: ci{ | Try it (`change-in-braces`) | `ci{handleClick<Esc>` |
+|  |  | Practice 1 (`change-in-braces-2`) | `ci{title<Esc>` |
+|  |  | Practice 2 (`change-in-braces-3`) | `ci{ color: 'red' <Esc>` |
+|  | Find a character: f | Try it (`find-char`) | `fw` |
+|  |  | Practice 1 (`find-char-2`) | `f,;` |
+|  |  | Practice 2 (`find-char-3`) | `f(` |
+| Deleting | Delete lines and repeat: dd and . | Try it (`delete-line-repeat`) | `dd..` |
+|  |  | Practice 1 (`delete-line-repeat-2`) | `dd` |
+|  |  | Practice 2 (`delete-line-repeat-3`) | `3dd` |
+|  | Replace a whole line: S | Try it (`substitute-line`) | `S<section>New</section><Esc>` |
+|  |  | Practice 1 (`substitute-line-2`) | `Sreturn null<Esc>` |
+|  |  | Practice 2 (`substitute-line-3`) | `jSconst b = 20<Esc>` |
+|  | Delete up to a character: dt | Try it (`delete-to-char`) | `dt)` |
+|  |  | Practice 1 (`delete-to-char-2`) | `dtf` |
+|  |  | Practice 2 (`delete-to-char-3`) | `dt)` |
+| Visual mode | Select inside parentheses: vi( | Try it (`visual-inside-parens`) | `vi(d` |
+|  |  | Practice 1 (`visual-inside-parens-2`) | `vi{d` |
+|  |  | Practice 2 (`visual-inside-parens-3`) | `vi'd` |
+|  | Select lines: V | Try it (`visual-lines`) | `Vjd` |
+|  |  | Practice 1 (`visual-lines-2`) | `V2jd` |
+|  |  | Practice 2 (`visual-lines-3`) | `Vkd` |
 
 ## Tangentbordslayout
 
 Här är risken störst, eftersom låset jämför `event.key` med lösningens tecken.
 
-- [ ] Svensk Mac: `^` är en död tangent. Går "Start of the line" att lösa?
-- [ ] Svensk Mac: `$`, `{`, `}`, `[`, `]` och `|` kräver Alt. Fungerar de som vanliga tecken?
-- [ ] Svensk layout: `'`, `(`, `)`, `/`, `:` och `%` fungerar.
-- [ ] Caps Lock på: vad händer med `j` (blir `J`, som är låst)? Meddelandet ska vara begripligt.
+- [ ] Svensk Mac: `^` är en död tangent (Shift+¨ och sedan mellanslag). "Start of the line" går att lösa, och inget `^` hamnar i texten. Ett annat sammansatt tecken (`~`) i normalläge ger "is locked here" och ändrar inget.
+- [ ] Svensk Mac: i insert-läge skriver döda tangenter som vanligt (`ê`, `~`, `^`).
+- [ ] Svensk Mac: `$`, `{`, `}`, `[`, `]` och `|` kräver Alt. Fungerar de som vanliga tecken i "End of the line" och "Change inside braces"?
+- [ ] Svensk layout: `'`, `"`, `(`, `)`, `/`, `:` och `%` fungerar.
+- [ ] Windows, svensk layout (ej verifierat): `{`, `}`, `$` med AltGr i normalläge utför kommandot, i insert-läge skrivs tecknet.
+- [ ] US International: `'` och `^` är döda tangenter. "Change inside quotes" och "Start of the line" går att lösa.
+- [ ] Caps Lock på: `j` blir `J`, och meddelandet frågar "Caps Lock on?".

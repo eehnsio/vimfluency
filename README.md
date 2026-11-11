@@ -22,8 +22,9 @@ npm run dev        # http://localhost:5173
 
 ## How it works
 
+- The course is categories → lessons → exercises. A lesson explains one thing, you try it with hints (or watch it played back), then practice it a few times.
 - Each exercise is data: a folder with `exercise.ts` and the real source files it uses.
-- Every exercise is proven by a test: its reference solution is run through the same engine the browser uses.
-- Only the keys an exercise teaches are enabled. Everything else, including arrow keys and the mouse, is locked. Press `r` if you get stuck.
+- Every exercise is proven by a test: its reference solution is run through the same engine the browser uses, both directly and as real key presses through the lock.
+- Each lesson unlocks the keys it teaches, and you keep everything you have learned. Keys that have not come up yet, arrow keys and the mouse are locked. Press `r` if you get stuck.
 
 See `CLAUDE.md` for the architecture and how to add an exercise.
