@@ -2,7 +2,7 @@ import { Prec, type Extension } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { Vim, getCM } from '@replit/codemirror-vim'
 import type { Mode } from '../exercises/types'
-import { COMPOSING_KEYS, isAltGr, keyFromEvent } from './lock'
+import { COMPOSING_KEYS, TAKES_CHAR, isAltGr, keyFromEvent } from './lock'
 
 /** Vim-pluginets editorobjekt för en vy. */
 export type VimEditor = NonNullable<ReturnType<typeof getCM>>
@@ -83,6 +83,30 @@ export function feedKey(view: EditorView, cm: VimEditor, key: string) {
   Vim.handleKey(cm, key, 'user')
 }
 
+/**
+ * Vad pluginet väntar på härnäst: ett valfritt tecken efter `f`/`t` (`char`),
+ * eller ett textobjekt efter `i`/`a` när en operator väntar eller i visualläge.
+ */
+function pendingArgument(cm: VimEditor): 'char' | 'i' | 'a' | null {
+  const vim = cm.state.vim
+  const last = vim?.inputState.keyBuffer.at(-1)
+  if (!vim || !last) return null
+  if (TAKES_CHAR.has(last)) return 'char'
+  if ((last === 'i' || last === 'a') && (vim.inputState.operator || vim.visualMode)) return last
+  return null
+}
+
+/**
+ * Om ett tecken får användas just nu i normal- eller visualläge. Tecknet efter
+ * `f`/`t` är text och alltid fritt. Efter `ci`/`vi` gäller de textobjekt som
+ * lärts ut (`i(`), så `(` blir aldrig ett eget kommando. Annars gäller listan.
+ */
+function allowsKey(cm: VimEditor, allowedKeys: ReadonlySet<string>, key: string): boolean {
+  const pending = key.length === 1 ? pendingArgument(cm) : null
+  if (pending === 'char') return true
+  return allowedKeys.has(pending ? pending + key : key)
+}
+
 interface KeyLock {
   view: EditorView
   cm: VimEditor
@@ -123,8 +147,9 @@ export function createKeyLock({ view, cm, allowedKeys, onBlocked }: KeyLock) {
       return block(event, key, onBlocked)
     }
 
-    const isEmergencyExit = key === 'r' && onBlocked !== undefined
-    if (!isEmergencyExit && allowedKeys.has(key)) {
+    // `r` som tecken efter `f`/`t` är text, inte nödutgången.
+    const isEmergencyExit = key === 'r' && onBlocked !== undefined && pendingArgument(cm) === null
+    if (!isEmergencyExit && allowsKey(cm, allowedKeys, key)) {
       // AltGr (Windows): pluginet läser det som Ctrl+Alt, så tangenten matas in här.
       if (isAltGr(event)) {
         event.preventDefault()
@@ -154,7 +179,9 @@ export function createTextLock(allowedKeys: ReadonlySet<string>, onBlocked?: (ke
     EditorView.inputHandler.of((view, _from, _to, text) => {
       const cm = getCM(view)
       if (!cm || typesText(view, cm)) return false
-      if (text.length === 1 && allowedKeys.has(text)) return false
+      // Pluginets egen återställning av en composition (`\0\0`) är ingen tangent.
+      if (/^\0+$/.test(text)) return false
+      if (text.length === 1 && allowsKey(cm, allowedKeys, text)) return false
       onBlocked?.(text)
       // Hanterad utan ändring: CodeMirror ritar om raden så att tecknet försvinner ur DOM:en.
       return true

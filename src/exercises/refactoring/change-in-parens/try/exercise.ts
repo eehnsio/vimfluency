@@ -16,6 +16,8 @@ export default defineExercise(
     start: { line: 3, col: 21 },
     checks: [{ type: 'contentEquals', expected }, { type: 'mode', mode: 'normal' }],
     solution: 'ci(props<Esc>',
+    // Lektionen nämner `cib`, samma kommando.
+    allowedKeys: 'cib',
   },
   import.meta.glob('./files/**', { query: '?raw', import: 'default', eager: true }),
 )

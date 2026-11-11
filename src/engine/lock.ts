@@ -26,7 +26,8 @@ const isDigit = (key: string) => /^\d$/.test(key)
 
 const INSERT_COMMANDS = new Set(['i', 'a', 'I', 'A', 'o', 'O', 'S', 's', 'C'])
 const OPERATORS = new Set(['c', 'd', 'y'])
-const TAKES_CHAR = new Set(['f', 'F', 't', 'T'])
+/** Rörelser som följs av ett valfritt tecken: `f,` `t)`. */
+export const TAKES_CHAR = new Set(['f', 'F', 't', 'T'])
 const PRETTY: Record<string, string> = {
   '<CR>': 'Enter',
   '<Esc>': 'Esc',
@@ -53,12 +54,16 @@ export function prettyKey(key: string): string {
  * i en `:`/`/`-prompt räknas inte, bara tangenterna som tar en dit och därifrån.
  * Låset och "Keys in play" bygger båda på den här listan, så ett `o` i texten
  * man skriver blir aldrig ett kommando i normalläge.
+ *
+ * Tecknet efter `f`/`t` är också text och räknas inte. Ett textobjekt (`i(` i
+ * `ci(`) blir en egen tangent, `i(`, utöver `i`: parentesen lärs ut som objekt,
+ * inte som kommandot `(`.
  */
 export function commandKeys(tokens: string[]): string[] {
   const keys: string[] = []
   let mode: 'normal' | 'visual' | 'insert' | 'prompt' = 'normal'
   let operator: string | null = null
-  let expect: 'object' | 'char' | null = null
+  let expect: 'i' | 'a' | 'char' | null = null
 
   for (const token of tokens) {
     if (mode === 'insert' || mode === 'prompt') {
@@ -68,16 +73,16 @@ export function commandKeys(tokens: string[]): string[] {
       }
       continue
     }
-    keys.push(token)
-
     // Argumentet till ett textobjekt (`i(`) eller en sökning på rad (`t)`).
     if (expect) {
+      if (expect !== 'char') keys.push(expect + token)
       expect = null
       if (operator === 'c') mode = 'insert'
       else if (operator) mode = 'normal'
       operator = null
       continue
     }
+    keys.push(token)
     if (token === ':' || token === '/' || token === '?') {
       mode = 'prompt'
       continue
@@ -87,7 +92,7 @@ export function commandKeys(tokens: string[]): string[] {
       continue
     }
     if ((operator || mode === 'visual') && (token === 'i' || token === 'a')) {
-      expect = 'object'
+      expect = token
       continue
     }
     if (isDigit(token)) continue
@@ -124,11 +129,18 @@ export function taughtKeys(solution: string, extra = ''): Set<string> {
   return taught
 }
 
-/** `g` `g` blir `gg` och `d` `d` blir `dd`, som man tänker på dem. */
+/** Ett textobjekt som `commandKeys` skriver det: `i(`, `a"`. */
+const isTextObject = (key: string) => /^[ia].$/.test(key)
+
+/**
+ * `g` `g` blir `gg` och `d` `d` blir `dd`, som man tänker på dem. Ett
+ * textobjekt visas som ett chip (`i(`), utan sitt `i` framför.
+ */
 function joinDoubled(keys: string[]): string[] {
   const joined: string[] = []
   for (let index = 0; index < keys.length; index++) {
     const key = keys[index]
+    if (isTextObject(keys[index + 1] ?? '') && keys[index + 1][0] === key) continue
     if (/^[gcdy]$/.test(key) && keys[index + 1] === key) {
       joined.push(key + key)
       index++

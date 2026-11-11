@@ -47,10 +47,11 @@ function type(session: Session, notation: string) {
   }
 }
 
-/** En tangent i "Keys in play" som låset ser den: `0-9` → `0`, `gg` → två `g`. */
+/** En tangent i "Keys in play" som låset ser den: `0-9` → `0`, `gg` → två `g`, textobjektet `i(` som det är. */
 function asLockKeys(key: string): string[] {
   const named = ({ Enter: '<CR>', Esc: '<Esc>', '0-9': '0' } as Record<string, string>)[key]
-  return named ? [named] : [...key]
+  if (named) return [named]
+  return /^[ia].$/.test(key) ? [key] : [...key]
 }
 
 /**

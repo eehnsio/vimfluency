@@ -362,6 +362,59 @@ describe('session lock', () => {
     expect(textLock(s.view, 0, 0, '~', insert)).toBe(false)
   })
 
+  it("does not report the plugin's own composition reset as a locked key", () => {
+    // Efter en död tangent skriver pluginet `\0\0` i DOM:en, och det kommer hit som text.
+    const { s, onBlocked } = locked('  abc', ['^'])
+    const [textLock] = s.view.state.facet(EditorView.inputHandler)
+    expect(textLock(s.view, 0, 0, '\0\0', () => s.view.state.update())).toBe(false)
+    expect(onBlocked).not.toHaveBeenCalled()
+  })
+
+  it('lets any character follow f and t, since it is text and not a command', () => {
+    const { s, onBlocked } = locked('a (b, c) m r', ['f', 'd', 't'])
+    const content = s.view.contentDOM
+    for (const [key, col] of [['(', 3], ['m', 10], ['r', 12]] as const) {
+      press(content, { key: 'f' })
+      press(content, { key })
+      expect(s.getState().cursor.col).toBe(col)
+    }
+    expect(onBlocked).not.toHaveBeenCalled()
+
+    // Tecknen är fortfarande inga egna kommandon, och r är nödutgången igen.
+    for (const key of ['(', 'm', 'r']) press(content, { key })
+    expect(onBlocked.mock.calls.map(([key]) => key)).toEqual(['(', 'm', 'r'])
+    expect(s.getState()).toMatchObject({ content: 'a (b, c) m r', cursor: { col: 12 } })
+  })
+
+  it('accepts a composed character after f (a dead key such as ^)', () => {
+    const { s, onBlocked } = locked('a ^ b', ['f'])
+    const [textLock] = s.view.state.facet(EditorView.inputHandler)
+    press(s.view.contentDOM, { key: 'f' })
+    expect(textLock(s.view, 0, 0, '^', () => s.view.state.update())).toBe(false)
+    expect(onBlocked).not.toHaveBeenCalled()
+  })
+
+  it('unlocks a text object only as an object, and only the ones taught', () => {
+    const { s, onBlocked } = locked('call(one two)', ['c', 'i', 'i(', '<Esc>'])
+    const content = s.view.contentDOM
+    s.sendKeys('fo')
+
+    // `ciw` är inte utlärt: w stoppas, och Esc avbryter kommandot.
+    for (const key of ['c', 'i', 'w']) press(content, { key })
+    expect(onBlocked.mock.calls.map(([key]) => key)).toEqual(['w'])
+    press(content, { key: 'Escape' })
+    expect(s.getState()).toMatchObject({ content: 'call(one two)', mode: 'normal' })
+
+    for (const key of ['c', 'i', '(']) press(content, { key })
+    expect(s.getState()).toMatchObject({ content: 'call()', mode: 'insert' })
+    press(content, { key: 'Escape' })
+
+    // Utanför `ci` är parentesen inget kommando.
+    onBlocked.mockClear()
+    press(content, { key: '(' })
+    expect(onBlocked).toHaveBeenCalledWith('(')
+  })
+
   it('feeds AltGr characters (Ctrl+Alt on Windows) to vim itself', () => {
     const { s, onBlocked } = locked('foo bar', ['$'])
     const event = press(s.view.contentDOM, { key: '$', ctrlKey: true, altKey: true })

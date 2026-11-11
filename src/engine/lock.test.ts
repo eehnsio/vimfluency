@@ -23,6 +23,19 @@ describe('taughtKeys', () => {
     expect(taughtKeys('%').has('3')).toBe(false)
   })
 
+  it('does not teach the character after f or t, since any character works there', () => {
+    expect([...taughtKeys('dt)')].sort()).toEqual(['<Esc>', 'd', 't'].sort())
+    expect([...taughtKeys('f,;')].sort()).toEqual(['<Esc>', ';', 'f'].sort())
+    // En siffra som tecken är inget count.
+    expect(taughtKeys('f2').has('7')).toBe(false)
+  })
+
+  it('teaches a text object as its own key, not as a command of its own', () => {
+    expect([...taughtKeys('ci(props<Esc>')].sort()).toEqual(['<Esc>', 'c', 'i', 'i('].sort())
+    expect([...taughtKeys('vi{d')].sort()).toEqual(['<Esc>', 'd', 'i', 'i{', 'v'].sort())
+    expect(taughtKeys('ci(x<Esc>', 'cib').has('ib')).toBe(true)
+  })
+
   it('adds extra command keys', () => {
     expect(taughtKeys('cwWorld<Esc>', 'u').has('u')).toBe(true)
   })
@@ -44,7 +57,7 @@ describe('displayKeys', () => {
 
   it('leaves out what is typed in insert mode', () => {
     expect(displayKeys('cwWorld<Esc>', 'u')).toEqual(['c', 'w', 'Esc', 'u'])
-    expect(displayKeys("ci'Update name<Esc>")).toEqual(['c', 'i', "'", 'Esc'])
+    expect(displayKeys("ci'Update name<Esc>")).toEqual(['c', "i'", 'Esc'])
     expect(displayKeys("oimport { useMemo } from 'react'<Esc>")).toEqual(['o', 'Esc'])
     expect(displayKeys('S<section>New</section><Esc>')).toEqual(['S', 'Esc'])
   })
@@ -54,10 +67,11 @@ describe('displayKeys', () => {
     expect(displayKeys('/NOTE<CR>nn')).toEqual(['/', 'Enter', 'n'])
   })
 
-  it('keeps the arguments of motions, operators and visual text objects', () => {
-    expect(displayKeys('dt)')).toEqual(['d', 't', ')'])
-    expect(displayKeys('fw')).toEqual(['f', 'w'])
-    expect(displayKeys('vi(d')).toEqual(['v', 'i', '(', 'd'])
+  it('shows a text object as one chip and leaves out the character after f or t', () => {
+    expect(displayKeys('dt)')).toEqual(['d', 't'])
+    expect(displayKeys('fw')).toEqual(['f'])
+    expect(displayKeys('vi(d')).toEqual(['v', 'i(', 'd'])
+    expect(displayKeys('ci(props<Esc>', 'cib')).toEqual(['c', 'i(', 'Esc', 'ib'])
     expect(displayKeys('Vjd')).toEqual(['V', 'j', 'd'])
   })
 })
