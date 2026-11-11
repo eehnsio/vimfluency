@@ -26,7 +26,8 @@ jobs:
           node-version: 24
           cache: npm
       - run: npm ci
-      # Publicera aldrig något som inte klarar testerna.
+      # Publicera aldrig något som inte klarar lint, typer och tester (typerna kollas i build).
+      - run: npm run lint
       - run: npm test
       - run: npm run build
         env:
